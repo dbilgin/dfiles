@@ -23,6 +23,8 @@ A modern, feature-rich file manager app for Android built with React Native and 
 - RNFS for file system operations
 - React Native Zip Archive for compression
 
+<img src="https://github.com/user-attachments/assets/a2d357f2-5779-4f56-bae5-42990c058280" width="300" />
+
 ---
 
 This is a [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
