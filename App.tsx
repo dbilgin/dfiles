@@ -5,126 +5,132 @@
  * @format
  */
 
-import React from 'react';
-import type {PropsWithChildren} from 'react';
-import {
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-} from 'react-native';
+import React, {useEffect, useState, useCallback} from 'react';
+import {View, Text, StyleSheet, ActivityIndicator, AppState} from 'react-native';
+import {NavigationContainer} from '@react-navigation/native';
+import {createStackNavigator} from '@react-navigation/stack';
+import {GestureHandlerRootView} from 'react-native-gesture-handler';
+import {AppProvider} from './src/context/AppContext';
+import {FileManagerScreen} from './src/screens/FileManagerScreen';
+import {SettingsScreen} from './src/screens/SettingsScreen';
+import {RootStackParamList} from './src/types';
+import {requestStoragePermission, checkStoragePermission} from './src/utils/permissions';
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
-
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
-
-function Section({children, title}: SectionProps): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-  return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
-}
+const Stack = createStackNavigator<RootStackParamList>();
 
 function App(): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
+  const [permissionStatus, setPermissionStatus] = useState<'checking' | 'granted' | 'denied'>('checking');
 
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
-  };
+  const handlePermissionRequest = useCallback(async () => {
+    try {
+      // First check if we already have permissions
+      const hasPermission = await checkStoragePermission();
+      if (hasPermission) {
+        setPermissionStatus('granted');
+        return;
+      }
 
-  /*
-   * To keep the template simple and small we're adding padding to prevent view
-   * from rendering under the System UI.
-   * For bigger apps the recommendation is to use `react-native-safe-area-context`:
-   * https://github.com/AppAndFlow/react-native-safe-area-context
-   *
-   * You can read more about it here:
-   * https://github.com/react-native-community/discussions-and-proposals/discussions/827
-   */
-  const safePadding = '5%';
+      // Request permissions if we don't have them
+      const result = await requestStoragePermission();
+      if (result.granted) {
+        setPermissionStatus('granted');
+      } else {
+        // Don't show the old alert - the new dialog handles this
+        setPermissionStatus('denied');
+      }
+    } catch (error) {
+      console.error('Error handling permissions:', error);
+      setPermissionStatus('denied');
+    }
+  }, []);
+
+  const handleAppStateChange = useCallback(async (nextAppState: string) => {
+    // When app comes back to foreground, check permissions again
+    if (nextAppState === 'active' && permissionStatus === 'denied') {
+      const hasPermission = await checkStoragePermission();
+      if (hasPermission) {
+        setPermissionStatus('granted');
+      }
+    }
+  }, [permissionStatus]);
+
+  useEffect(() => {
+    handlePermissionRequest();
+  }, [handlePermissionRequest]);
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', handleAppStateChange);
+    return () => subscription?.remove();
+  }, [handleAppStateChange]);
+
+  if (permissionStatus === 'checking') {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#007AFF" />
+        <Text style={styles.loadingText}>Checking permissions...</Text>
+      </View>
+    );
+  }
+
+  if (permissionStatus === 'denied') {
+    return (
+      <View style={styles.permissionContainer}>
+        <Text style={styles.permissionTitle}>Waiting for Permission</Text>
+        <Text style={styles.permissionText}>
+          Please enable "All files access" for dfiles in your device settings, then return to the app.
+        </Text>
+      </View>
+    );
+  }
 
   return (
-    <View style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
-      />
-      <ScrollView
-        style={backgroundStyle}>
-        <View style={{paddingRight: safePadding}}>
-          <Header/>
-        </View>
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-            paddingHorizontal: safePadding,
-            paddingBottom: safePadding,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
-    </View>
+    <GestureHandlerRootView style={{flex: 1}}>
+      <AppProvider>
+        <NavigationContainer>
+          <Stack.Navigator
+            screenOptions={{
+              headerShown: false,
+            }}>
+            <Stack.Screen name="FileManager" component={FileManagerScreen} />
+            <Stack.Screen name="Settings" component={SettingsScreen} />
+          </Stack.Navigator>
+        </NavigationContainer>
+      </AppProvider>
+    </GestureHandlerRootView>
   );
 }
 
 const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#fff',
   },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: '#666',
   },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
+  permissionContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+    backgroundColor: '#fff',
   },
-  highlight: {
-    fontWeight: '700',
+  permissionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 16,
+    textAlign: 'center',
+    color: '#333',
+  },
+  permissionText: {
+    fontSize: 16,
+    textAlign: 'center',
+    color: '#666',
+    lineHeight: 24,
   },
 });
 
