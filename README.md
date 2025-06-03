@@ -1,4 +1,31 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# dfiles - React Native File Manager
+
+A modern, feature-rich file manager app for Android built with React Native and TypeScript.
+
+## Features
+
+- **File Browsing**: Navigate through your device storage with an intuitive interface
+- **Recent Files**: Quick access to your 5 most recently modified files on the home screen
+- **File Operations**: Copy, cut, paste, rename, delete, and share files and folders
+- **Compression**: Create ZIP archives and extract compressed files
+- **Trash System**: Safe file deletion with restore capability - files go to trash instead of permanent deletion
+- **File Info**: View detailed metadata including size, modification date, and file type
+- **Bulk Operations**: Multi-select files for batch operations
+- **Create Folders**: Add new folders with the floating action button
+- **Dark/Light Theme**: Automatic theme switching with custom alerts that respect your theme choice
+- **Comprehensive Permissions**: Full storage access with Android 11+ MANAGE_EXTERNAL_STORAGE support
+
+## Tech Stack
+
+- React Native 0.79.2 with TypeScript
+- Custom themed UI components
+- Native Android modules for storage permissions
+- RNFS for file system operations
+- React Native Zip Archive for compression
+
+---
+
+This is a [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
 
 # Getting Started
 
