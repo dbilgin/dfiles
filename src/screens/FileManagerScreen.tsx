@@ -10,6 +10,7 @@ import {
   Modal,
   ScrollView,
   TextInput,
+  NativeModules,
 } from 'react-native';
 import Share from 'react-native-share';
 import FileViewer from 'react-native-file-viewer';
@@ -41,6 +42,8 @@ import {
 } from '../utils/fileUtils';
 import {lightTheme, darkTheme} from '../utils/theme';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+
+const {ApkInstaller} = NativeModules;
 
 type FileManagerScreenNavigationProp = StackNavigationProp<
   RootStackParamList,
@@ -315,24 +318,40 @@ export const FileManagerScreen: React.FC<FileManagerScreenProps> = ({navigation}
     if (item.isDirectory) {
       navigateToPath(item.path);
     } else {
-      // Check if it's an XAPK file or other potentially unsupported formats
+      // Check if it's an APK file
       const extension = item.name.toLowerCase().split('.').pop();
-      const unsupportedExtensions = ['xapk', 'xapks'];
+      const apkExtensions = ['apk', 'xapk', 'xapks'];
       
-      if (extension && unsupportedExtensions.includes(extension)) {
-        setSelectedFileForMetadata(item);
-        return;
-      }
-      
-      // Try to open file with default app
-      FileViewer.open(item.path)
-        .then(() => {
-          // File opened successfully
-        })
-        .catch((_error) => {
-          // Show metadata modal for unsupported files
+      if (extension && apkExtensions.includes(extension)) {
+        // Install the APK
+        ApkInstaller.installApk(item.path)
+          .then(() => {
+            // APK installed successfully
+          })
+          .catch((error: any) => {
+            // Show metadata modal for APK files
+            console.error('APK installation failed:', error);
+            setSelectedFileForMetadata(item);
+          });
+      } else {
+        // Check if it's an XAPK file or other potentially unsupported formats
+        const unsupportedExtensions = ['xapk', 'xapks'];
+        
+        if (extension && unsupportedExtensions.includes(extension)) {
           setSelectedFileForMetadata(item);
-        });
+          return;
+        }
+        
+        // Try to open file with default app
+        FileViewer.open(item.path)
+          .then(() => {
+            // File opened successfully
+          })
+          .catch((_error: any) => {
+            // Show metadata modal for unsupported files
+            setSelectedFileForMetadata(item);
+          });
+      }
     }
   };
 

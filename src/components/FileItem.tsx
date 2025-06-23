@@ -6,6 +6,7 @@ import {
   StyleSheet,
   TouchableWithoutFeedback,
   Modal,
+  NativeModules,
 } from 'react-native';
 import Share from 'react-native-share';
 import FileViewer from 'react-native-file-viewer';
@@ -14,6 +15,8 @@ import {FileItem as FileItemType} from '../types';
 import {formatFileSize, formatDate} from '../utils/fileUtils';
 import {useAppContext} from '../context/AppContext';
 import {lightTheme, darkTheme} from '../utils/theme';
+
+const {ApkInstaller} = NativeModules;
 
 interface FileItemProps {
   item: FileItemType;
@@ -50,6 +53,8 @@ const getFileIcon = (item: FileItemType): string => {
       return 'music-note';
     case 'document':
       return 'description';
+    case 'apk':
+      return 'android';
     default:
       return 'insert-drive-file';
   }
@@ -69,6 +74,8 @@ const getFileIconColor = (item: FileItemType, theme: any): string => {
       return '#9C27B0';
     case 'document':
       return '#2196F3';
+    case 'apk':
+      return '#3DDC84';
     default:
       return theme.colors.icon;
   }
@@ -202,10 +209,31 @@ export const FileItem: React.FC<FileItemProps> = ({
     }
   };
 
+  const handleInstall = () => {
+    setShowMenu(false);
+    if (item.type === 'apk') {
+      ApkInstaller.installApk(item.path)
+        .then(() => {
+          // APK installed successfully
+        })
+        .catch((error: any) => {
+          console.error('APK installation failed:', error);
+          if (showAlert) {
+            showAlert('Error', 'Failed to install APK');
+          }
+        });
+    }
+  };
+
   // Check if file is a supported archive format
   const isArchiveFile = () => {
     const extension = item.name.toLowerCase().split('.').pop();
     return ['zip', 'rar', '7z', 'tar', 'gz', 'bz2'].includes(extension || '');
+  };
+
+  // Check if file is an APK
+  const isApkFile = () => {
+    return item.type === 'apk';
   };
 
   return (
@@ -318,6 +346,12 @@ export const FileItem: React.FC<FileItemProps> = ({
                 <Icon name="delete-forever" size={20} color="#F44336" />
                 <Text style={[styles.menuText, {color: '#F44336'}]}>Delete Permanently</Text>
               </TouchableOpacity>
+              {isApkFile() && (
+                <TouchableOpacity style={styles.menuItem} onPress={handleInstall}>
+                  <Icon name="install" size={20} color={theme.colors.text} />
+                  <Text style={styles.menuText}>Install</Text>
+                </TouchableOpacity>
+              )}
             </View>
           </View>
         </TouchableWithoutFeedback>

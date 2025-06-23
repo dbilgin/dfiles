@@ -19,6 +19,7 @@ export const getFileType = (filename: string): FileItem['type'] => {
     'ppt',
     'pptx',
   ];
+  const apkExtensions = ['apk'];
 
   if (extension && imageExtensions.includes(extension)) {
     return 'image';
@@ -31,6 +32,9 @@ export const getFileType = (filename: string): FileItem['type'] => {
   }
   if (extension && documentExtensions.includes(extension)) {
     return 'document';
+  }
+  if (extension && apkExtensions.includes(extension)) {
+    return 'apk';
   }
 
   return 'other';

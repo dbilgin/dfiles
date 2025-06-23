@@ -5,7 +5,7 @@ export interface FileItem {
   isDirectory: boolean;
   mtime: Date;
   isSelected?: boolean;
-  type?: 'image' | 'video' | 'audio' | 'document' | 'other';
+  type?: 'image' | 'video' | 'audio' | 'document' | 'apk' | 'other';
 }
 
 export interface FolderInfo {
