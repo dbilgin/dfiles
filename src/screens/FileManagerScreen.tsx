@@ -11,6 +11,7 @@ import {
   ScrollView,
   TextInput,
   NativeModules,
+  BackHandler,
 } from 'react-native';
 import Share from 'react-native-share';
 import FileViewer from 'react-native-file-viewer';
@@ -21,7 +22,11 @@ import {FileItem} from '../components/FileItem';
 import {CustomAlert} from '../components/CustomAlert';
 import {useAppContext} from '../context/AppContext';
 import {useCustomAlert} from '../hooks/useCustomAlert';
-import {FileItem as FileItemType, SortOptions, RootStackParamList} from '../types';
+import {
+  FileItem as FileItemType,
+  SortOptions,
+  RootStackParamList,
+} from '../types';
 import {
   readDirectory,
   sortFiles,
@@ -64,31 +69,28 @@ const RenameModal: React.FC<{
   theme: any;
 }> = ({visible, fileName, onFileNameChange, onConfirm, onCancel, theme}) => {
   const styles = createModalStyles(theme);
-  
+
   return (
     <Modal
       visible={visible}
       transparent={true}
       animationType="fade"
-      onRequestClose={onCancel}
-    >
+      onRequestClose={onCancel}>
       <TouchableOpacity
         style={styles.modalOverlay}
         activeOpacity={1}
-        onPress={onCancel}
-      >
+        onPress={onCancel}>
         <TouchableOpacity
           style={styles.modalContent}
           activeOpacity={1}
-          onPress={() => {}}
-        >
+          onPress={() => {}}>
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>Rename File</Text>
             <TouchableOpacity onPress={onCancel} style={styles.closeButton}>
               <Icon name="close" size={24} color={theme.colors.text} />
             </TouchableOpacity>
           </View>
-          
+
           <View style={styles.modalBody}>
             <Text style={styles.inputLabel}>New name:</Text>
             <TextInput
@@ -100,24 +102,23 @@ const RenameModal: React.FC<{
               autoFocus={true}
               selectTextOnFocus={true}
             />
-            
+
             <View style={styles.modalButtons}>
               <TouchableOpacity
                 style={[styles.modalButton, styles.cancelButton]}
-                onPress={onCancel}
-              >
+                onPress={onCancel}>
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
-              
+
               <TouchableOpacity
                 style={[styles.modalButton, styles.confirmButton]}
                 onPress={onConfirm}
-                disabled={!fileName.trim()}
-              >
-                <Text style={[
-                  styles.confirmButtonText,
-                  !fileName.trim() && styles.disabledButtonText
-                ]}>
+                disabled={!fileName.trim()}>
+                <Text
+                  style={[
+                    styles.confirmButtonText,
+                    !fileName.trim() && styles.disabledButtonText,
+                  ]}>
                   Rename
                 </Text>
               </TouchableOpacity>
@@ -136,33 +137,37 @@ const CreateFolderModal: React.FC<{
   onConfirm: () => void;
   onCancel: () => void;
   theme: any;
-}> = ({visible, folderName, onFolderNameChange, onConfirm, onCancel, theme}) => {
+}> = ({
+  visible,
+  folderName,
+  onFolderNameChange,
+  onConfirm,
+  onCancel,
+  theme,
+}) => {
   const styles = createModalStyles(theme);
-  
+
   return (
     <Modal
       visible={visible}
       transparent={true}
       animationType="fade"
-      onRequestClose={onCancel}
-    >
+      onRequestClose={onCancel}>
       <TouchableOpacity
         style={styles.modalOverlay}
         activeOpacity={1}
-        onPress={onCancel}
-      >
+        onPress={onCancel}>
         <TouchableOpacity
           style={styles.modalContent}
           activeOpacity={1}
-          onPress={() => {}}
-        >
+          onPress={() => {}}>
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>Create Folder</Text>
             <TouchableOpacity onPress={onCancel} style={styles.closeButton}>
               <Icon name="close" size={24} color={theme.colors.text} />
             </TouchableOpacity>
           </View>
-          
+
           <View style={styles.modalBody}>
             <Text style={styles.inputLabel}>Folder name:</Text>
             <TextInput
@@ -174,24 +179,23 @@ const CreateFolderModal: React.FC<{
               autoFocus={true}
               selectTextOnFocus={true}
             />
-            
+
             <View style={styles.modalButtons}>
               <TouchableOpacity
                 style={[styles.modalButton, styles.cancelButton]}
-                onPress={onCancel}
-              >
+                onPress={onCancel}>
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
-              
+
               <TouchableOpacity
                 style={[styles.modalButton, styles.confirmButton]}
                 onPress={onConfirm}
-                disabled={!folderName.trim()}
-              >
-                <Text style={[
-                  styles.confirmButtonText,
-                  !folderName.trim() && styles.disabledButtonText
-                ]}>
+                disabled={!folderName.trim()}>
+                <Text
+                  style={[
+                    styles.confirmButtonText,
+                    !folderName.trim() && styles.disabledButtonText,
+                  ]}>
                   Create
                 </Text>
               </TouchableOpacity>
@@ -203,7 +207,9 @@ const CreateFolderModal: React.FC<{
   );
 };
 
-export const FileManagerScreen: React.FC<FileManagerScreenProps> = ({navigation}) => {
+export const FileManagerScreen: React.FC<FileManagerScreenProps> = ({
+  navigation,
+}) => {
   const {state, dispatch} = useAppContext();
   const {alertState, showAlert, hideAlert} = useCustomAlert();
   const [refreshing, setRefreshing] = useState(false);
@@ -216,37 +222,42 @@ export const FileManagerScreen: React.FC<FileManagerScreenProps> = ({navigation}
     sortBy: 'name',
     sortOrder: 'asc',
   });
-  const [selectedFileForMetadata, setSelectedFileForMetadata] = useState<FileItemType | null>(null);
+  const [selectedFileForMetadata, setSelectedFileForMetadata] =
+    useState<FileItemType | null>(null);
   const [renameModalVisible, setRenameModalVisible] = useState(false);
   const [fileToRename, setFileToRename] = useState<FileItemType | null>(null);
   const [newFileName, setNewFileName] = useState('');
-  const [createFolderModalVisible, setCreateFolderModalVisible] = useState(false);
+  const [createFolderModalVisible, setCreateFolderModalVisible] =
+    useState(false);
   const [newFolderName, setNewFolderName] = useState('');
   const [recentFiles, setRecentFiles] = useState<FileItemType[]>([]);
 
   const theme = state.isDarkMode ? darkTheme : lightTheme;
   const styles = createStyles(theme);
 
-  const loadFiles = useCallback(async (path: string) => {
-    try {
-      setLoading(true);
-      console.log('Loading files from path:', path);
-      
-      console.log('Reading directory:', path);
-      const files = await readDirectory(path);
-      console.log('Files found:', files.length);
-      
-      const sortedFiles = sortFiles(files, sortOptions);
-      dispatch({type: 'SET_FILES', payload: sortedFiles});
-      dispatch({type: 'SET_CURRENT_PATH', payload: path});
-    } catch (error) {
-      console.error('Error loading files:', error);
-      // Just set empty files, no alert popups
-      dispatch({type: 'SET_FILES', payload: []});
-    } finally {
-      setLoading(false);
-    }
-  }, [dispatch, sortOptions]);
+  const loadFiles = useCallback(
+    async (path: string) => {
+      try {
+        setLoading(true);
+        console.log('Loading files from path:', path);
+
+        console.log('Reading directory:', path);
+        const files = await readDirectory(path);
+        console.log('Files found:', files.length);
+
+        const sortedFiles = sortFiles(files, sortOptions);
+        dispatch({type: 'SET_FILES', payload: sortedFiles});
+        dispatch({type: 'SET_CURRENT_PATH', payload: path});
+      } catch (error) {
+        console.error('Error loading files:', error);
+        // Just set empty files, no alert popups
+        dispatch({type: 'SET_FILES', payload: []});
+      } finally {
+        setLoading(false);
+      }
+    },
+    [dispatch, sortOptions],
+  );
 
   const loadRecentFiles = useCallback(async () => {
     try {
@@ -270,7 +281,7 @@ export const FileManagerScreen: React.FC<FileManagerScreenProps> = ({navigation}
     setRefreshing(true);
     Promise.all([
       loadFiles(state.currentPath),
-      isRootDirectory() ? loadRecentFiles() : Promise.resolve()
+      isRootDirectory() ? loadRecentFiles() : Promise.resolve(),
     ]).finally(() => setRefreshing(false));
   }, [loadFiles, loadRecentFiles, state.currentPath, isRootDirectory]);
 
@@ -281,13 +292,16 @@ export const FileManagerScreen: React.FC<FileManagerScreenProps> = ({navigation}
     }
   }, [loadFiles, loadRecentFiles, state.currentPath, isRootDirectory]);
 
-  const navigateToPath = (path: string) => {
-    const newHistory = navigationHistory.slice(0, currentHistoryIndex + 1);
-    newHistory.push(path);
-    setNavigationHistory(newHistory);
-    setCurrentHistoryIndex(newHistory.length - 1);
-    loadFiles(path);
-  };
+  const navigateToPath = useCallback(
+    (path: string) => {
+      const newHistory = navigationHistory.slice(0, currentHistoryIndex + 1);
+      newHistory.push(path);
+      setNavigationHistory(newHistory);
+      setCurrentHistoryIndex(newHistory.length - 1);
+      loadFiles(path);
+    },
+    [navigationHistory, currentHistoryIndex, loadFiles],
+  );
 
   const getCurrentFolderName = () => {
     const pathParts = state.currentPath.split('/').filter(part => part !== '');
@@ -297,22 +311,51 @@ export const FileManagerScreen: React.FC<FileManagerScreenProps> = ({navigation}
     return pathParts[pathParts.length - 1] || 'Storage';
   };
 
-  const canGoBack = () => {
-    return state.currentPath !== '/storage/emulated/0' && currentHistoryIndex > 0;
-  };
+  const canGoBack = useCallback(() => {
+    return (
+      state.currentPath !== '/storage/emulated/0' && currentHistoryIndex > 0
+    );
+  }, [state.currentPath, currentHistoryIndex]);
 
-  const goBack = () => {
+  const goBack = useCallback(() => {
     if (canGoBack()) {
       const newIndex = currentHistoryIndex - 1;
       setCurrentHistoryIndex(newIndex);
       loadFiles(navigationHistory[newIndex]);
     } else if (state.currentPath !== '/storage/emulated/0') {
       // Go to parent directory
-      const parentPath = state.currentPath.substring(0, state.currentPath.lastIndexOf('/'));
+      const parentPath = state.currentPath.substring(
+        0,
+        state.currentPath.lastIndexOf('/'),
+      );
       const targetPath = parentPath || '/storage/emulated/0';
       navigateToPath(targetPath);
     }
-  };
+  }, [
+    canGoBack,
+    currentHistoryIndex,
+    loadFiles,
+    navigationHistory,
+    state.currentPath,
+    navigateToPath,
+  ]);
+
+  useEffect(() => {
+    const backAction = () => {
+      if (canGoBack()) {
+        goBack();
+        return true;
+      }
+      return false;
+    };
+
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      backAction,
+    );
+
+    return () => backHandler.remove();
+  }, [canGoBack, goBack]);
 
   const handleFilePress = (item: FileItemType) => {
     if (item.isDirectory) {
@@ -321,7 +364,7 @@ export const FileManagerScreen: React.FC<FileManagerScreenProps> = ({navigation}
       // Check if it's an APK file
       const extension = item.name.toLowerCase().split('.').pop();
       const apkExtensions = ['apk', 'xapk', 'xapks'];
-      
+
       if (extension && apkExtensions.includes(extension)) {
         // Install the APK
         ApkInstaller.installApk(item.path)
@@ -336,12 +379,12 @@ export const FileManagerScreen: React.FC<FileManagerScreenProps> = ({navigation}
       } else {
         // Check if it's an XAPK file or other potentially unsupported formats
         const unsupportedExtensions = ['xapk', 'xapks'];
-        
+
         if (extension && unsupportedExtensions.includes(extension)) {
           setSelectedFileForMetadata(item);
           return;
         }
-        
+
         // Try to open file with default app
         FileViewer.open(item.path)
           .then(() => {
@@ -368,7 +411,9 @@ export const FileManagerScreen: React.FC<FileManagerScreenProps> = ({navigation}
   };
 
   const handleDelete = () => {
-    if (state.selectedFiles.length === 0) return;
+    if (state.selectedFiles.length === 0) {
+      return;
+    }
 
     showAlert(
       'Delete Files',
@@ -389,12 +434,14 @@ export const FileManagerScreen: React.FC<FileManagerScreenProps> = ({navigation}
             }
           },
         },
-      ]
+      ],
     );
   };
 
   const handleDeletePermanentlyMultiple = () => {
-    if (state.selectedFiles.length === 0) return;
+    if (state.selectedFiles.length === 0) {
+      return;
+    }
 
     showAlert(
       'Delete Permanently',
@@ -415,12 +462,14 @@ export const FileManagerScreen: React.FC<FileManagerScreenProps> = ({navigation}
             }
           },
         },
-      ]
+      ],
     );
   };
 
   const handleCopy = () => {
-    if (state.selectedFiles.length === 0) return;
+    if (state.selectedFiles.length === 0) {
+      return;
+    }
     dispatch({
       type: 'SET_CLIPBOARD',
       payload: {files: state.selectedFiles, operation: 'copy'},
@@ -430,7 +479,9 @@ export const FileManagerScreen: React.FC<FileManagerScreenProps> = ({navigation}
   };
 
   const handleCut = () => {
-    if (state.selectedFiles.length === 0) return;
+    if (state.selectedFiles.length === 0) {
+      return;
+    }
     dispatch({
       type: 'SET_CLIPBOARD',
       payload: {files: state.selectedFiles, operation: 'cut'},
@@ -440,7 +491,9 @@ export const FileManagerScreen: React.FC<FileManagerScreenProps> = ({navigation}
   };
 
   const handlePaste = async () => {
-    if (state.clipboard.files.length === 0) return;
+    if (state.clipboard.files.length === 0) {
+      return;
+    }
 
     const {files, operation} = state.clipboard;
     let success = false;
@@ -456,7 +509,7 @@ export const FileManagerScreen: React.FC<FileManagerScreenProps> = ({navigation}
       onRefresh();
       showAlert(
         'Success',
-        `${files.length} item(s) ${operation === 'copy' ? 'copied' : 'moved'}`
+        `${files.length} item(s) ${operation === 'copy' ? 'copied' : 'moved'}`,
       );
     } else {
       showAlert('Error', `Failed to ${operation} files`);
@@ -464,7 +517,9 @@ export const FileManagerScreen: React.FC<FileManagerScreenProps> = ({navigation}
   };
 
   const handleShare = async () => {
-    if (state.selectedFiles.length === 0) return;
+    if (state.selectedFiles.length === 0) {
+      return;
+    }
 
     try {
       const shareOptions = {
@@ -476,7 +531,10 @@ export const FileManagerScreen: React.FC<FileManagerScreenProps> = ({navigation}
       // Don't show alert if user cancels sharing
       if (error && typeof error === 'object' && 'message' in error) {
         const errorMessage = (error as any).message;
-        if (!errorMessage.includes('User did not share') && !errorMessage.includes('cancelled')) {
+        if (
+          !errorMessage.includes('User did not share') &&
+          !errorMessage.includes('cancelled')
+        ) {
           console.error('Share error:', error);
           showAlert('Error', 'Failed to share files');
         }
@@ -500,59 +558,53 @@ export const FileManagerScreen: React.FC<FileManagerScreenProps> = ({navigation}
   };
 
   const handleCompress = async (file: FileItemType) => {
-    showAlert(
-      'Compress',
-      `Compress "${file.name}" into a ZIP archive?`,
-      [
-        {text: 'Cancel', style: 'cancel'},
-        {
-          text: 'Compress',
-          onPress: async () => {
-            try {
-              const success = await compressFile(file.path, state.currentPath);
-              if (success) {
-                onRefresh(); // Refresh the file list
-              } else {
-                showAlert('Error', 'Failed to compress file');
-              }
-            } catch (error) {
-              console.error('Compression error:', error);
+    showAlert('Compress', `Compress "${file.name}" into a ZIP archive?`, [
+      {text: 'Cancel', style: 'cancel'},
+      {
+        text: 'Compress',
+        onPress: async () => {
+          try {
+            const success = await compressFile(file.path, state.currentPath);
+            if (success) {
+              onRefresh(); // Refresh the file list
+            } else {
               showAlert('Error', 'Failed to compress file');
             }
-          },
+          } catch (error) {
+            console.error('Compression error:', error);
+            showAlert('Error', 'Failed to compress file');
+          }
         },
-      ]
-    );
+      },
+    ]);
   };
 
   const handleDecompress = async (file: FileItemType) => {
-    showAlert(
-      'Extract',
-      `Extract "${file.name}" to the current folder?`,
-      [
-        {text: 'Cancel', style: 'cancel'},
-        {
-          text: 'Extract',
-          onPress: async () => {
-            try {
-              const success = await decompressFile(file.path, state.currentPath);
-              if (success) {
-                onRefresh(); // Refresh the file list
-              } else {
-                showAlert('Error', 'Failed to extract archive');
-              }
-            } catch (error) {
-              console.error('Decompression error:', error);
+    showAlert('Extract', `Extract "${file.name}" to the current folder?`, [
+      {text: 'Cancel', style: 'cancel'},
+      {
+        text: 'Extract',
+        onPress: async () => {
+          try {
+            const success = await decompressFile(file.path, state.currentPath);
+            if (success) {
+              onRefresh(); // Refresh the file list
+            } else {
               showAlert('Error', 'Failed to extract archive');
             }
-          },
+          } catch (error) {
+            console.error('Decompression error:', error);
+            showAlert('Error', 'Failed to extract archive');
+          }
         },
-      ]
-    );
+      },
+    ]);
   };
 
   const confirmRename = async () => {
-    if (!fileToRename || !newFileName.trim()) return;
+    if (!fileToRename || !newFileName.trim()) {
+      return;
+    }
 
     try {
       const success = await renameFile(fileToRename.path, newFileName.trim());
@@ -576,10 +628,15 @@ export const FileManagerScreen: React.FC<FileManagerScreenProps> = ({navigation}
   }, []);
 
   const confirmCreateFolder = async () => {
-    if (!newFolderName.trim()) return;
+    if (!newFolderName.trim()) {
+      return;
+    }
 
     try {
-      const success = await createFolder(state.currentPath, newFolderName.trim());
+      const success = await createFolder(
+        state.currentPath,
+        newFolderName.trim(),
+      );
       if (success) {
         setCreateFolderModalVisible(false);
         setNewFolderName('');
@@ -635,35 +692,31 @@ export const FileManagerScreen: React.FC<FileManagerScreenProps> = ({navigation}
             }
           },
         },
-      ]
+      ],
     );
   };
 
   const handleDeleteSingle = async (file: FileItemType) => {
-    showAlert(
-      'Delete File',
-      `Move "${file.name}" to trash?`,
-      [
-        {text: 'Cancel', style: 'cancel'},
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              const success = await moveToTrash(file.path);
-              if (success) {
-                onRefresh(); // Refresh the file list
-              } else {
-                showAlert('Error', 'Failed to move file to trash');
-              }
-            } catch (error) {
-              console.error('Delete error:', error);
+    showAlert('Delete File', `Move "${file.name}" to trash?`, [
+      {text: 'Cancel', style: 'cancel'},
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            const success = await moveToTrash(file.path);
+            if (success) {
+              onRefresh(); // Refresh the file list
+            } else {
               showAlert('Error', 'Failed to move file to trash');
             }
-          },
+          } catch (error) {
+            console.error('Delete error:', error);
+            showAlert('Error', 'Failed to move file to trash');
+          }
         },
-      ]
-    );
+      },
+    ]);
   };
 
   const renderFileItem = ({item}: {item: FileItemType}) => (
@@ -698,90 +751,110 @@ export const FileManagerScreen: React.FC<FileManagerScreenProps> = ({navigation}
   );
 
   const FileMetadataModal = () => {
-    if (!selectedFileForMetadata) return null;
+    if (!selectedFileForMetadata) {
+      return null;
+    }
 
     const file = selectedFileForMetadata;
     const fileType = file.isDirectory ? 'folder' : getFileType(file.name);
-    const extension = file.isDirectory ? 'FOLDER' : file.name.toLowerCase().split('.').pop()?.toUpperCase() || 'UNKNOWN';
+    const extension = file.isDirectory
+      ? 'FOLDER'
+      : file.name.toLowerCase().split('.').pop()?.toUpperCase() || 'UNKNOWN';
 
     return (
       <Modal
         visible={!!selectedFileForMetadata}
         transparent={true}
         animationType="fade"
-        onRequestClose={() => setSelectedFileForMetadata(null)}
-      >
+        onRequestClose={() => setSelectedFileForMetadata(null)}>
         <TouchableOpacity
           style={styles.modalOverlay}
           activeOpacity={1}
-          onPress={() => setSelectedFileForMetadata(null)}
-        >
+          onPress={() => setSelectedFileForMetadata(null)}>
           <TouchableOpacity
             style={styles.modalContent}
             activeOpacity={1}
             onPress={() => {}} // Prevent modal from closing when tapping content
           >
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>{file.isDirectory ? 'Folder' : 'File'} Information</Text>
+              <Text style={styles.modalTitle}>
+                {file.isDirectory ? 'Folder' : 'File'} Information
+              </Text>
               <TouchableOpacity
                 onPress={() => setSelectedFileForMetadata(null)}
-                style={styles.closeButton}
-              >
+                style={styles.closeButton}>
                 <Icon name="close" size={24} color={theme.colors.text} />
               </TouchableOpacity>
             </View>
-            
+
             <ScrollView style={styles.modalBody}>
               <View style={styles.fileIconContainer}>
                 <Icon
                   name={
-                    file.isDirectory ? 'folder' :
-                    fileType === 'image' ? 'image' :
-                    fileType === 'video' ? 'movie' :
-                    fileType === 'audio' ? 'music-note' :
-                    fileType === 'document' ? 'description' :
-                    'insert-drive-file'
+                    file.isDirectory
+                      ? 'folder'
+                      : fileType === 'image'
+                      ? 'image'
+                      : fileType === 'video'
+                      ? 'movie'
+                      : fileType === 'audio'
+                      ? 'music-note'
+                      : fileType === 'document'
+                      ? 'description'
+                      : 'insert-drive-file'
                   }
                   size={64}
                   color={file.isDirectory ? '#FFA726' : theme.colors.primary}
                 />
-                <Text style={styles.fileTypeLabel}>{extension} {file.isDirectory ? '' : 'File'}</Text>
+                <Text style={styles.fileTypeLabel}>
+                  {extension} {file.isDirectory ? '' : 'File'}
+                </Text>
               </View>
-              
+
               <View style={styles.metadataContainer}>
                 <View style={styles.metadataRow}>
                   <Text style={styles.metadataLabel}>Name:</Text>
                   <Text style={styles.metadataValue}>{file.name}</Text>
                 </View>
-                
+
                 {!file.isDirectory && (
                   <View style={styles.metadataRow}>
                     <Text style={styles.metadataLabel}>Size:</Text>
-                    <Text style={styles.metadataValue}>{formatFileSize(file.size)}</Text>
+                    <Text style={styles.metadataValue}>
+                      {formatFileSize(file.size)}
+                    </Text>
                   </View>
                 )}
-                
+
                 <View style={styles.metadataRow}>
                   <Text style={styles.metadataLabel}>Modified:</Text>
-                  <Text style={styles.metadataValue}>{formatDate(file.mtime)}</Text>
+                  <Text style={styles.metadataValue}>
+                    {formatDate(file.mtime)}
+                  </Text>
                 </View>
-                
+
                 <View style={styles.metadataRow}>
                   <Text style={styles.metadataLabel}>Path:</Text>
-                  <Text style={[styles.metadataValue, styles.pathText]}>{file.path}</Text>
+                  <Text style={[styles.metadataValue, styles.pathText]}>
+                    {file.path}
+                  </Text>
                 </View>
-                
+
                 <View style={styles.metadataRow}>
                   <Text style={styles.metadataLabel}>Type:</Text>
-                  <Text style={styles.metadataValue}>{file.isDirectory ? 'Folder' : fileType}</Text>
+                  <Text style={styles.metadataValue}>
+                    {file.isDirectory ? 'Folder' : fileType}
+                  </Text>
                 </View>
               </View>
-              
+
               {!file.isDirectory && (
                 <Text style={styles.noAppText}>
-                  {(['xapk', 'xapks'].includes(file.name.toLowerCase().split('.').pop() || '')) ? 
-                    'No app available to open this file type.' : 
-                    'Tap to open with default app.'}
+                  {['xapk', 'xapks'].includes(
+                    file.name.toLowerCase().split('.').pop() || '',
+                  )
+                    ? 'No app available to open this file type.'
+                    : 'Tap to open with default app.'}
                 </Text>
               )}
             </ScrollView>
@@ -807,24 +880,31 @@ export const FileManagerScreen: React.FC<FileManagerScreenProps> = ({navigation}
           renderItem={({item}) => (
             <TouchableOpacity
               style={styles.recentFileItem}
-              onPress={() => handleFilePress(item)}
-            >
+              onPress={() => handleFilePress(item)}>
               <View style={styles.recentFileIconContainer}>
                 <Icon
                   name={
-                    item.type === 'image' ? 'image' :
-                    item.type === 'video' ? 'movie' :
-                    item.type === 'audio' ? 'music-note' :
-                    item.type === 'document' ? 'description' :
-                    'insert-drive-file'
+                    item.type === 'image'
+                      ? 'image'
+                      : item.type === 'video'
+                      ? 'movie'
+                      : item.type === 'audio'
+                      ? 'music-note'
+                      : item.type === 'document'
+                      ? 'description'
+                      : 'insert-drive-file'
                   }
                   size={32}
                   color={
-                    item.type === 'image' ? '#4CAF50' :
-                    item.type === 'video' ? '#F44336' :
-                    item.type === 'audio' ? '#9C27B0' :
-                    item.type === 'document' ? '#2196F3' :
-                    theme.colors.icon
+                    item.type === 'image'
+                      ? '#4CAF50'
+                      : item.type === 'video'
+                      ? '#F44336'
+                      : item.type === 'audio'
+                      ? '#9C27B0'
+                      : item.type === 'document'
+                      ? '#2196F3'
+                      : theme.colors.icon
                   }
                 />
               </View>
@@ -855,7 +935,7 @@ export const FileManagerScreen: React.FC<FileManagerScreenProps> = ({navigation}
         canGoBack={canGoBack()}
         isInTrash={isInTrash()}
       />
-      
+
       <View style={styles.content}>
         {state.clipboard.files.length > 0 && (
           <TouchableOpacity style={styles.pasteBar} onPress={handlePaste}>
@@ -865,9 +945,9 @@ export const FileManagerScreen: React.FC<FileManagerScreenProps> = ({navigation}
             </Text>
           </TouchableOpacity>
         )}
-        
+
         {renderRecentFilesSection()}
-        
+
         <FlatList
           data={state.files}
           renderItem={renderFileItem}
@@ -884,18 +964,17 @@ export const FileManagerScreen: React.FC<FileManagerScreenProps> = ({navigation}
           style={styles.list}
         />
       </View>
-      
+
       {/* Floating Action Button */}
       {!state.isSelectionMode && (
         <TouchableOpacity
           style={styles.fab}
           onPress={handleCreateFolder}
-          activeOpacity={0.8}
-        >
+          activeOpacity={0.8}>
           <Icon name="add" size={28} color={theme.colors.background} />
         </TouchableOpacity>
       )}
-      
+
       <FileMetadataModal />
       <RenameModal
         visible={renameModalVisible}
@@ -1223,4 +1302,4 @@ const createModalStyles = (theme: any) =>
     disabledButtonText: {
       opacity: 0.5,
     },
-  }); 
+  });
