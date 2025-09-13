@@ -39,7 +39,7 @@ export const SettingsScreen = () => {
           <View style={styles.settingItem}>
             <View style={styles.settingInfo}>
               <Text style={styles.settingLabel}>Version</Text>
-              <Text style={styles.settingValue}>1.0.0</Text>
+              <Text style={styles.settingValue}>1.2.0</Text>
             </View>
           </View>
         </View>
