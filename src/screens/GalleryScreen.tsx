@@ -7,18 +7,17 @@ import {
   TouchableOpacity,
   Image,
   RefreshControl,
-  Modal,
   Dimensions,
-  ScrollView,
-  Share,
 } from 'react-native';
+import ImageView from 'react-native-image-viewing';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {useAppContext} from '../context/AppContext';
 import {useCustomAlert} from '../hooks/useCustomAlert';
 import {lightTheme, darkTheme} from '../utils/theme';
 import {readDirectory, moveToTrash} from '../utils/fileUtils';
 import RNFS from 'react-native-fs';
-import { CustomAlert } from '../components/CustomAlert';
+import {CustomAlert} from '../components/CustomAlert';
+import Share from 'react-native-share';
 
 interface ImageFolder {
   name: string;
@@ -40,61 +39,66 @@ export const GalleryScreen = () => {
   const [imageFolders, setImageFolders] = useState<ImageFolder[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [collapsedFolders, setCollapsedFolders] = useState<Set<string>>(new Set());
+  const [collapsedFolders, setCollapsedFolders] = useState<Set<string>>(
+    new Set(),
+  );
   const [selectedImage, setSelectedImage] = useState<ImageFile | null>(null);
   const [imageModalVisible, setImageModalVisible] = useState(false);
 
   const theme = state.isDarkMode ? darkTheme : lightTheme;
   const styles = createStyles(theme);
 
-  const scanSubdirectories = useCallback(async (basePath: string, folders: ImageFolder[]) => {
-    try {
-      // Check if base directory exists first
-      const exists = await RNFS.exists(basePath);
-      if (!exists) {
-        return;
-      }
-
-      const files = await readDirectory(basePath);
-      const subdirs = files.filter(file => file.isDirectory);
-
-      for (const subdir of subdirs) {
-        try {
-          const subdirPath = subdir.path;
-
-          // Check if subdirectory exists before reading
-          const subdirExists = await RNFS.exists(subdirPath);
-          if (!subdirExists) {
-            continue;
-          }
-
-          const subdirFiles = await readDirectory(subdirPath);
-          const imageFiles: ImageFile[] = subdirFiles
-            .filter(file => !file.isDirectory && isImageFile(file.name))
-            .map(file => ({
-              name: file.name,
-              path: file.path,
-              size: file.size,
-              mtime: file.mtime.getTime(),
-            }));
-
-          if (imageFiles.length > 0) {
-            const folderName = getFolderDisplayName(subdirPath);
-            folders.push({
-              name: folderName,
-              path: subdirPath,
-              images: imageFiles.sort((a, b) => b.mtime - a.mtime),
-              thumbnail: imageFiles[0]?.path,
-            });
-          }
-        } catch (error) {
-          // Silently skip inaccessible subdirectories
+  const scanSubdirectories = useCallback(
+    async (basePath: string, folders: ImageFolder[]) => {
+      try {
+        // Check if base directory exists first
+        const exists = await RNFS.exists(basePath);
+        if (!exists) {
+          return;
         }
+
+        const files = await readDirectory(basePath);
+        const subdirs = files.filter(file => file.isDirectory);
+
+        for (const subdir of subdirs) {
+          try {
+            const subdirPath = subdir.path;
+
+            // Check if subdirectory exists before reading
+            const subdirExists = await RNFS.exists(subdirPath);
+            if (!subdirExists) {
+              continue;
+            }
+
+            const subdirFiles = await readDirectory(subdirPath);
+            const imageFiles: ImageFile[] = subdirFiles
+              .filter(file => !file.isDirectory && isImageFile(file.name))
+              .map(file => ({
+                name: file.name,
+                path: file.path,
+                size: file.size,
+                mtime: file.mtime.getTime(),
+              }));
+
+            if (imageFiles.length > 0) {
+              const folderName = getFolderDisplayName(subdirPath);
+              folders.push({
+                name: folderName,
+                path: subdirPath,
+                images: imageFiles.sort((a, b) => b.mtime - a.mtime),
+                thumbnail: imageFiles[0]?.path,
+              });
+            }
+          } catch (error) {
+            // Silently skip inaccessible subdirectories
+          }
+        }
+      } catch (error) {
+        // Silently skip if base directory is inaccessible
       }
-    } catch (error) {
-      // Silently skip if base directory is inaccessible
-    }
-  }, []);
+    },
+    [],
+  );
 
   const scanForImages = async () => {
     try {
@@ -105,6 +109,7 @@ export const GalleryScreen = () => {
       const imageDirectories = [
         '/storage/emulated/0/DCIM',
         '/storage/emulated/0/Pictures',
+        '/storage/emulated/0/Movies',
         '/storage/emulated/0/Download',
         '/storage/emulated/0/WhatsApp/Media/WhatsApp Images',
         '/storage/emulated/0/Android/data/com.whatsapp/files/WhatsApp/Media/WhatsApp Images',
@@ -151,8 +156,11 @@ export const GalleryScreen = () => {
       // Also scan subdirectories of DCIM and Pictures
       await scanSubdirectories('/storage/emulated/0/DCIM', folders);
       await scanSubdirectories('/storage/emulated/0/Pictures', folders);
+      await scanSubdirectories('/storage/emulated/0/Movies', folders);
 
-      setImageFolders(folders.sort((a, b) => b.images.length - a.images.length));
+      setImageFolders(
+        folders.sort((a, b) => b.images.length - a.images.length),
+      );
     } catch (error) {
       console.error('Error scanning for images:', error);
       showAlert('Error', 'Failed to load images');
@@ -161,8 +169,28 @@ export const GalleryScreen = () => {
     }
   };
 
+
+  const isVideoFile = (filename: string) => {
+    const videoExtensions = ['.mp4', '.avi', '.mov', '.mkv', '.webm'];
+    return videoExtensions.some(ext => filename.toLowerCase().endsWith(ext));
+  };
+
   const isImageFile = (filename: string): boolean => {
-    const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'heic', 'heif'];
+    const imageExtensions = [
+      'jpg',
+      'jpeg',
+      'png',
+      'gif',
+      'bmp',
+      'webp',
+      'heic',
+      'heif',
+      'mp4',
+      'avi',
+      'mov',
+      'mkv',
+      'webm',
+    ];
     const extension = filename.toLowerCase().split('.').pop();
     return extension ? imageExtensions.includes(extension) : false;
   };
@@ -173,13 +201,13 @@ export const GalleryScreen = () => {
 
     // Map common folder names to more user-friendly names
     const folderNameMap: {[key: string]: string} = {
-      'DCIM': 'Camera',
-      'Pictures': 'Pictures',
-      'Download': 'Downloads',
+      DCIM: 'Camera',
+      Pictures: 'Pictures',
+      Download: 'Downloads',
       'WhatsApp Images': 'WhatsApp',
       'Telegram Images': 'Telegram',
-      'Instagram': 'Instagram',
-      'cache': 'Instagram Cache',
+      Instagram: 'Instagram',
+      cache: 'Instagram Cache',
     };
 
     return folderNameMap[folderName] || folderName;
@@ -214,15 +242,12 @@ export const GalleryScreen = () => {
       return;
     }
 
-    try {
-      await Share.share({
-        url: `file://${selectedImage.path}`,
-        title: selectedImage.name,
-      });
-    } catch (error) {
-      console.error('Error sharing image:', error);
-      showAlert('Error', 'Failed to share image');
-    }
+    await Share.open({
+      url: `file://${selectedImage.path}`,
+      title: selectedImage.name,
+    }).catch(err => {
+      console.error(err);
+    });
   };
 
   const handleDeleteImage = async () => {
@@ -230,33 +255,29 @@ export const GalleryScreen = () => {
       return;
     }
 
-    showAlert(
-      'Delete Image',
-      `Move "${selectedImage.name}" to trash?`,
-      [
-        {text: 'Cancel', style: 'cancel'},
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              const success = await moveToTrash(selectedImage.path);
-              if (success) {
-                setImageModalVisible(false);
-                setSelectedImage(null);
-                // Refresh the gallery
-                await scanForImages();
-              } else {
-                showAlert('Error', 'Failed to delete image');
-              }
-            } catch (error) {
-              console.error('Delete error:', error);
+    showAlert('Delete Image', `Move "${selectedImage.name}" to trash?`, [
+      {text: 'Cancel', style: 'cancel'},
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            const success = await moveToTrash(selectedImage.path);
+            if (success) {
+              setImageModalVisible(false);
+              setSelectedImage(null);
+              // Refresh the gallery
+              await scanForImages();
+            } else {
               showAlert('Error', 'Failed to delete image');
             }
-          },
+          } catch (error) {
+            console.error('Delete error:', error);
+            showAlert('Error', 'Failed to delete image');
+          }
         },
-      ],
-    );
+      },
+    ]);
   };
 
   useEffect(() => {
@@ -273,10 +294,19 @@ export const GalleryScreen = () => {
         style={styles.imageThumbnail}
         resizeMode="cover"
       />
+      {isVideoFile(item.name) && (
+        <Icon
+          style={styles.videoIcon}
+          name={'play-circle'}
+          size={24}
+          color={theme.colors.background}
+        />
+      )}
     </TouchableOpacity>
   );
 
-  const renderFolderSection = (folder: ImageFolder) => {
+  const renderFolderSection = ({item}: {item: ImageFolder}) => {
+    const folder = item;
     const isCollapsed = collapsedFolders.has(folder.path);
 
     return (
@@ -286,7 +316,9 @@ export const GalleryScreen = () => {
           onPress={() => toggleFolderCollapse(folder.path)}>
           <View style={styles.folderHeaderLeft}>
             <Icon
-              name={isCollapsed ? 'keyboard-arrow-right' : 'keyboard-arrow-down'}
+              name={
+                isCollapsed ? 'keyboard-arrow-right' : 'keyboard-arrow-down'
+              }
               size={24}
               color={theme.colors.text}
             />
@@ -306,7 +338,7 @@ export const GalleryScreen = () => {
           <FlatList
             data={folder.images}
             renderItem={renderImageItem}
-            keyExtractor={(item) => item.path}
+            keyExtractor={i => i.path}
             numColumns={3}
             contentContainerStyle={styles.imagesGrid}
             scrollEnabled={false}
@@ -346,12 +378,22 @@ export const GalleryScreen = () => {
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Gallery</Text>
         <Text style={styles.headerSubtitle}>
-          {imageFolders.reduce((total, folder) => total + folder.images.length, 0)} images in {imageFolders.length} folders
+          {imageFolders.reduce(
+            (total, folder) => total + folder.images.length,
+            0,
+          )}{' '}
+          images in {imageFolders.length} folders
         </Text>
       </View>
 
-      <ScrollView
+      <FlatList
         style={styles.scrollView}
+        data={imageFolders}
+        renderItem={renderFolderSection}
+        keyExtractor={item => item.path}
+        numColumns={1}
+        scrollEnabled
+        showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -360,48 +402,37 @@ export const GalleryScreen = () => {
             tintColor={theme.colors.primary}
           />
         }
-        showsVerticalScrollIndicator={false}>
-        {imageFolders.map(renderFolderSection)}
-      </ScrollView>
+      />
 
-      {/* Full-screen Image Modal */}
-      <Modal
+      <ImageView
+        images={[
+          {
+            uri: `file://${selectedImage?.path}`,
+          },
+        ]}
+        imageIndex={0}
         visible={imageModalVisible}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setImageModalVisible(false)}>
-        <View style={styles.imageModalOverlay}>
-          <TouchableOpacity
-            style={styles.imageModalCloseArea}
-            onPress={() => setImageModalVisible(false)}
-          />
-          <View style={styles.imageModalContent}>
-            {selectedImage && (
-              <>
-                <Image
-                  source={{uri: `file://${selectedImage.path}`}}
-                  style={styles.fullScreenImage}
-                  resizeMode="contain"
-                />
-                <View style={styles.imageModalActions}>
-                  <TouchableOpacity
-                    style={styles.imageActionButton}
-                    onPress={handleShareImage}>
-                    <Icon name="share" size={24} color={theme.colors.background} />
-                    <Text style={styles.imageActionText}>Share</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.imageActionButton, styles.deleteButton]}
-                    onPress={handleDeleteImage}>
-                    <Icon name="delete" size={24} color="#fff" />
-                    <Text style={[styles.imageActionText, styles.deleteButtonText]}>Delete</Text>
-                  </TouchableOpacity>
-                </View>
-              </>
-            )}
+        onRequestClose={() => setImageModalVisible(false)}
+        FooterComponent={() => (
+          <View style={styles.imageModalActions}>
+            <TouchableOpacity
+              style={styles.imageActionButton}
+              onPress={handleShareImage}>
+              <Icon name="share" size={24} color={theme.colors.background} />
+              <Text style={styles.imageActionText}>Share</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.imageActionButton, styles.deleteButton]}
+              onPress={handleDeleteImage}>
+              <Icon name="delete" size={24} color="#fff" />
+              <Text style={[styles.imageActionText, styles.deleteButtonText]}>
+                Delete
+              </Text>
+            </TouchableOpacity>
           </View>
-        </View>
-      </Modal>
+        )}
+      />
+
       <CustomAlert
         visible={alertState.visible}
         title={alertState.title}
@@ -418,6 +449,7 @@ const imageSize = (screenWidth - 60) / 3; // 3 columns with margins
 
 const createStyles = (theme: any) =>
   StyleSheet.create({
+    videoIcon: {position: 'absolute', top: 0, left: 0},
     container: {
       flex: 1,
       backgroundColor: theme.colors.background,
@@ -486,6 +518,7 @@ const createStyles = (theme: any) =>
     },
     folderSection: {
       marginBottom: 16,
+      flex: 1,
     },
     folderHeader: {
       flexDirection: 'row',
