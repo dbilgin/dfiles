@@ -8,15 +8,10 @@
 import React, {useEffect, useState, useCallback} from 'react';
 import {View, Text, StyleSheet, ActivityIndicator, AppState} from 'react-native';
 import {NavigationContainer} from '@react-navigation/native';
-import {createStackNavigator} from '@react-navigation/stack';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import {AppProvider} from './src/context/AppContext';
-import {FileManagerScreen} from './src/screens/FileManagerScreen';
-import {SettingsScreen} from './src/screens/SettingsScreen';
-import {RootStackParamList} from './src/types';
+import {TabNavigator} from './src/navigation/TabNavigator';
 import {requestStoragePermission, checkStoragePermission} from './src/utils/permissions';
-
-const Stack = createStackNavigator<RootStackParamList>();
 
 function App(): React.JSX.Element {
   const [permissionStatus, setPermissionStatus] = useState<'checking' | 'granted' | 'denied'>('checking');
@@ -87,13 +82,7 @@ function App(): React.JSX.Element {
     <GestureHandlerRootView style={{flex: 1}}>
       <AppProvider>
         <NavigationContainer>
-          <Stack.Navigator
-            screenOptions={{
-              headerShown: false,
-            }}>
-            <Stack.Screen name="FileManager" component={FileManagerScreen} />
-            <Stack.Screen name="Settings" component={SettingsScreen} />
-          </Stack.Navigator>
+          <TabNavigator />
         </NavigationContainer>
       </AppProvider>
     </GestureHandlerRootView>
