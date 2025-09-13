@@ -16,7 +16,6 @@ import {
 import Share from 'react-native-share';
 import FileViewer from 'react-native-file-viewer';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import {StackNavigationProp} from '@react-navigation/stack';
 import {Header} from '../components/Header';
 import {FileItem} from '../components/FileItem';
 import {CustomAlert} from '../components/CustomAlert';
@@ -25,7 +24,6 @@ import {useCustomAlert} from '../hooks/useCustomAlert';
 import {
   FileItem as FileItemType,
   SortOptions,
-  RootStackParamList,
 } from '../types';
 import {
   readDirectory,
@@ -50,14 +48,7 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 
 const {ApkInstaller} = NativeModules;
 
-type FileManagerScreenNavigationProp = StackNavigationProp<
-  RootStackParamList,
-  'FileManager'
->;
-
-interface FileManagerScreenProps {
-  navigation: FileManagerScreenNavigationProp;
-}
+interface FileManagerScreenProps {}
 
 // Move modal components outside to prevent re-creation on every render
 const RenameModal: React.FC<{
@@ -207,9 +198,7 @@ const CreateFolderModal: React.FC<{
   );
 };
 
-export const FileManagerScreen: React.FC<FileManagerScreenProps> = ({
-  navigation,
-}) => {
+export const FileManagerScreen: React.FC<FileManagerScreenProps> = () => {
   const {state, dispatch} = useAppContext();
   const {alertState, showAlert, hideAlert} = useCustomAlert();
   const [refreshing, setRefreshing] = useState(false);
@@ -542,9 +531,6 @@ export const FileManagerScreen: React.FC<FileManagerScreenProps> = ({
     }
   };
 
-  const handleSettings = () => {
-    navigation.navigate('Settings');
-  };
 
   const handleRename = useCallback((file: FileItemType) => {
     setFileToRename(file);
@@ -931,7 +917,6 @@ export const FileManagerScreen: React.FC<FileManagerScreenProps> = ({
         onCopy={handleCopy}
         onCut={handleCut}
         onShare={handleShare}
-        onSettings={handleSettings}
         canGoBack={canGoBack()}
         isInTrash={isInTrash()}
       />

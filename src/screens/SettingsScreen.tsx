@@ -4,18 +4,13 @@ import {
   Text,
   StyleSheet,
   Switch,
-  TouchableOpacity,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import Icon from 'react-native-vector-icons/MaterialIcons';
 import {useAppContext} from '../context/AppContext';
 import {lightTheme, darkTheme} from '../utils/theme';
 
-interface SettingsScreenProps {
-  navigation: any;
-}
 
-export const SettingsScreen: React.FC<SettingsScreenProps> = ({navigation}) => {
+export const SettingsScreen = () => {
   const {state, dispatch} = useAppContext();
   const theme = state.isDarkMode ? darkTheme : lightTheme;
   const styles = createStyles(theme);
@@ -24,16 +19,9 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({navigation}) => {
     dispatch({type: 'TOGGLE_DARK_MODE'});
   };
 
-  const handleBack = () => {
-    navigation.goBack();
-  };
-
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-          <Icon name="arrow-back" size={24} color={theme.colors.text} />
-        </TouchableOpacity>
         <Text style={styles.headerTitle}>Settings</Text>
         <View style={styles.placeholder} />
       </View>
@@ -41,7 +29,6 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({navigation}) => {
       <View style={styles.content}>
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>App Information</Text>
-          
           <View style={styles.settingItem}>
             <View style={styles.settingInfo}>
               <Text style={styles.settingLabel}>App Name</Text>
@@ -59,7 +46,6 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({navigation}) => {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Appearance</Text>
-          
           <View style={styles.settingItem}>
             <View style={styles.settingInfo}>
               <Text style={styles.settingLabel}>Dark Mode</Text>
@@ -152,4 +138,4 @@ const createStyles = (theme: any) =>
       fontSize: theme.fontSize.sm,
       color: theme.colors.textSecondary,
     },
-  }); 
+  });

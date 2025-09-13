@@ -47,4 +47,11 @@ export interface PermissionStatus {
 export type RootStackParamList = {
   FileManager: undefined;
   Settings: undefined;
-}; 
+  Gallery: undefined;
+};
+
+export type TabParamList = {
+  FileManager: undefined;
+  Gallery: undefined;
+  Settings: undefined;
+};

@@ -108,6 +108,11 @@ export const readDirectory = async (path: string): Promise<FileItem[]> => {
       return [];
     }
 
+    // Handle folder does not exist error - just return empty array, no alerts
+    if (errorMessage.includes('Folder does not exist') || errorMessage.includes('does not exist')) {
+      return [];
+    }
+
     // For any other error, just return empty array
     return [];
   }
@@ -412,26 +417,28 @@ export const getRecentFiles = async (limit: number = 5): Promise<FileItem[]> => 
   try {
     const basePath = RNFS.ExternalStorageDirectoryPath;
     const allFiles: FileItem[] = [];
-    
+
     // Define directories to scan for recent files
     const directoriesToScan = [
       `${basePath}/Download`,
-      `${basePath}/Documents`, 
+      `${basePath}/Documents`,
       `${basePath}/Pictures`,
       `${basePath}/DCIM`,
       `${basePath}/Music`,
       `${basePath}/Movies`,
       basePath, // Root directory
     ];
-    
+
     // Scan each directory for files (not subdirectories to keep it fast)
     for (const dirPath of directoriesToScan) {
       try {
         const exists = await RNFS.exists(dirPath);
-        if (!exists) continue;
-        
+        if (!exists) {
+          continue;
+        }
+
         const items = await RNFS.readDir(dirPath);
-        
+
         // Only include files, not directories
         const files = items
           .filter(item => !item.isDirectory())
@@ -443,19 +450,19 @@ export const getRecentFiles = async (limit: number = 5): Promise<FileItem[]> => 
             mtime: item.mtime || new Date(),
             type: getFileType(item.name),
           }));
-        
+
         allFiles.push(...files);
       } catch (error) {
         // Skip directories we can't access
         continue;
       }
     }
-    
+
     // Sort by modification time (most recent first) and limit results
     const recentFiles = allFiles
       .sort((a, b) => b.mtime.getTime() - a.mtime.getTime())
       .slice(0, limit);
-    
+
     return recentFiles;
   } catch (error) {
     console.error('Error getting recent files:', error);
@@ -470,22 +477,22 @@ export const getTrashPath = (): string => {
 export const moveToTrash = async (filePath: string): Promise<boolean> => {
   try {
     const trashPath = getTrashPath();
-    
+
     // Create trash directory if it doesn't exist
     try {
       await RNFS.stat(trashPath);
     } catch {
       await RNFS.mkdir(trashPath);
     }
-    
+
     const fileName = filePath.split('/').pop() || '';
     const timestamp = Date.now();
     const trashedFileName = `${timestamp}_${fileName}`;
     const destinationPath = `${trashPath}/${trashedFileName}`;
-    
+
     // Move file to trash
     await RNFS.moveFile(filePath, destinationPath);
-    
+
     // Create metadata file to track original location
     const metadataPath = `${destinationPath}.meta`;
     const metadata = {
@@ -494,7 +501,7 @@ export const moveToTrash = async (filePath: string): Promise<boolean> => {
       originalName: fileName,
     };
     await RNFS.writeFile(metadataPath, JSON.stringify(metadata, null, 2));
-    
+
     return true;
   } catch (error) {
     console.error('Error moving file to trash:', error);
@@ -505,11 +512,11 @@ export const moveToTrash = async (filePath: string): Promise<boolean> => {
 export const restoreFromTrash = async (trashedFilePath: string): Promise<boolean> => {
   try {
     const metadataPath = `${trashedFilePath}.meta`;
-    
+
     // Read original location from metadata
     const metadataContent = await RNFS.readFile(metadataPath);
     const metadata = JSON.parse(metadataContent);
-    
+
     // Check if original directory still exists
     const originalDir = metadata.originalPath.substring(0, metadata.originalPath.lastIndexOf('/'));
     try {
@@ -518,12 +525,12 @@ export const restoreFromTrash = async (trashedFilePath: string): Promise<boolean
       // Original directory doesn't exist, restore to Downloads
       metadata.originalPath = `${RNFS.ExternalStorageDirectoryPath}/Download/${metadata.originalName}`;
     }
-    
+
     // Generate unique name if file already exists at original location
     let restorePath = metadata.originalPath;
     let counter = 1;
     while (await RNFS.exists(restorePath)) {
-      const nameWithoutExt = metadata.originalName.includes('.') 
+      const nameWithoutExt = metadata.originalName.includes('.')
         ? metadata.originalName.substring(0, metadata.originalName.lastIndexOf('.'))
         : metadata.originalName;
       const extension = metadata.originalName.includes('.')
@@ -533,13 +540,13 @@ export const restoreFromTrash = async (trashedFilePath: string): Promise<boolean
       restorePath = `${originalDir}/${newName}`;
       counter++;
     }
-    
+
     // Move file back to original location
     await RNFS.moveFile(trashedFilePath, restorePath);
-    
+
     // Remove metadata file
     await RNFS.unlink(metadataPath);
-    
+
     return true;
   } catch (error) {
     console.error('Error restoring file from trash:', error);
@@ -568,14 +575,14 @@ export const permanentlyDeleteFiles = async (filePaths: string[]): Promise<boole
 export const emptyTrash = async (): Promise<boolean> => {
   try {
     const trashPath = getTrashPath();
-    
+
     try {
       const items = await RNFS.readDir(trashPath);
       await Promise.all(items.map(item => RNFS.unlink(item.path)));
     } catch {
       // Trash folder might not exist or be empty
     }
-    
+
     return true;
   } catch (error) {
     console.error('Error emptying trash:', error);
@@ -586,16 +593,16 @@ export const emptyTrash = async (): Promise<boolean> => {
 export const getTrashFiles = async (): Promise<FileItem[]> => {
   try {
     const trashPath = getTrashPath();
-    
+
     try {
       await RNFS.stat(trashPath);
     } catch {
       // Trash folder doesn't exist
       return [];
     }
-    
+
     const items = await RNFS.readDir(trashPath);
-    
+
     // Filter out metadata files and create FileItems with original names
     const trashFiles = await Promise.all(
       items
@@ -603,7 +610,7 @@ export const getTrashFiles = async (): Promise<FileItem[]> => {
         .map(async (item) => {
           let originalName = item.name;
           let deletedAt = item.mtime;
-          
+
           // Try to read metadata for original name and deletion date
           try {
             const metadataContent = await RNFS.readFile(`${item.path}.meta`);
@@ -617,7 +624,7 @@ export const getTrashFiles = async (): Promise<FileItem[]> => {
               originalName = item.name.substring(underscoreIndex + 1);
             }
           }
-          
+
           const fileItem: FileItem = {
             name: originalName,
             path: item.path,
@@ -629,7 +636,7 @@ export const getTrashFiles = async (): Promise<FileItem[]> => {
           return fileItem;
         })
     );
-    
+
     return trashFiles;
   } catch (error) {
     console.error('Error reading trash files:', error);

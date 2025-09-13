@@ -20,7 +20,6 @@ interface HeaderProps {
   onCopy?: () => void;
   onCut?: () => void;
   onShare?: () => void;
-  onSettings?: () => void;
   canGoBack?: boolean;
   isInTrash?: boolean;
 }
@@ -35,7 +34,6 @@ export const Header: React.FC<HeaderProps> = ({
   onCopy,
   onCut,
   onShare,
-  onSettings,
   canGoBack = false,
   isInTrash = false,
 }) => {
@@ -104,11 +102,6 @@ export const Header: React.FC<HeaderProps> = ({
             {title}
           </Text>
         </View>
-        <View style={styles.rightSection}>
-          <TouchableOpacity onPress={onSettings} style={styles.iconButton}>
-            <Icon name="settings" size={24} color={theme.colors.headerText} />
-          </TouchableOpacity>
-        </View>
       </View>
     </View>
   );
@@ -144,10 +137,6 @@ const createStyles = (theme: any) =>
       flexDirection: 'row',
       alignItems: 'center',
     },
-    rightSection: {
-      flexDirection: 'row',
-      alignItems: 'center',
-    },
     title: {
       fontSize: theme.fontSize.lg,
       fontWeight: '500',
@@ -170,4 +159,4 @@ const createStyles = (theme: any) =>
       padding: theme.spacing.sm,
       borderRadius: theme.borderRadius.md,
     },
-  }); 
+  });
