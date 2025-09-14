@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useCallback} from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -11,13 +11,16 @@ import {
 } from 'react-native';
 import ImageView from 'react-native-image-viewing';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import {useAppContext} from '../context/AppContext';
-import {useCustomAlert} from '../hooks/useCustomAlert';
-import {lightTheme, darkTheme} from '../utils/theme';
-import {readDirectory, moveToTrash} from '../utils/fileUtils';
+import { useAppContext } from '../context/AppContext';
+import { useCustomAlert } from '../hooks/useCustomAlert';
+import { lightTheme, darkTheme } from '../utils/theme';
+import { readDirectory } from '../utils/fileUtils';
 import RNFS from 'react-native-fs';
-import {CustomAlert} from '../components/CustomAlert';
-import Share from 'react-native-share';
+import { CustomAlert } from '../components/CustomAlert';
+import { GalleryStackParamList } from '../navigation/GalleryStack';
+import { StackScreenProps } from '@react-navigation/stack';
+import { MediaFooter } from '../components/MediaFooter';
+import { useIsFocused } from '@react-navigation/native';
 
 interface ImageFolder {
   name: string;
@@ -33,9 +36,11 @@ interface ImageFile {
   mtime: number;
 }
 
-export const GalleryScreen = () => {
-  const {state} = useAppContext();
-  const {showAlert, alertState, hideAlert} = useCustomAlert();
+type Props = StackScreenProps<GalleryStackParamList, 'Gallery'>;
+
+export const GalleryScreen = ({ navigation }: Props) => {
+  const { state } = useAppContext();
+  const { showAlert, alertState, hideAlert } = useCustomAlert();
   const [imageFolders, setImageFolders] = useState<ImageFolder[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -66,7 +71,7 @@ export const GalleryScreen = () => {
 
             // Check if subdirectory exists before reading
             const subdirExists = await RNFS.exists(subdirPath);
-            if (!subdirExists) {
+            if (!subdirExists || subdir.name.includes('.thumbnails')) {
               continue;
             }
 
@@ -200,7 +205,7 @@ export const GalleryScreen = () => {
     const folderName = pathParts[pathParts.length - 1];
 
     // Map common folder names to more user-friendly names
-    const folderNameMap: {[key: string]: string} = {
+    const folderNameMap: { [key: string]: string } = {
       DCIM: 'Camera',
       Pictures: 'Pictures',
       Download: 'Downloads',
@@ -232,52 +237,19 @@ export const GalleryScreen = () => {
     });
   };
 
+  const isFocused = useIsFocused();
+  useEffect(() => {
+    if (isFocused) scanForImages();
+  }, [isFocused]);
+
   const handleImagePress = (image: ImageFile) => {
+    if (isVideoFile(image.name)) {
+      navigation.navigate('VideoPlayer', { video: image.path });
+      return;
+    }
+
     setSelectedImage(image);
     setImageModalVisible(true);
-  };
-
-  const handleShareImage = async () => {
-    if (!selectedImage) {
-      return;
-    }
-
-    await Share.open({
-      url: `file://${selectedImage.path}`,
-      title: selectedImage.name,
-    }).catch(err => {
-      console.error(err);
-    });
-  };
-
-  const handleDeleteImage = async () => {
-    if (!selectedImage) {
-      return;
-    }
-
-    showAlert('Delete Image', `Move "${selectedImage.name}" to trash?`, [
-      {text: 'Cancel', style: 'cancel'},
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            const success = await moveToTrash(selectedImage.path);
-            if (success) {
-              setImageModalVisible(false);
-              setSelectedImage(null);
-              // Refresh the gallery
-              await scanForImages();
-            } else {
-              showAlert('Error', 'Failed to delete image');
-            }
-          } catch (error) {
-            console.error('Delete error:', error);
-            showAlert('Error', 'Failed to delete image');
-          }
-        },
-      },
-    ]);
   };
 
   useEffect(() => {
@@ -285,12 +257,12 @@ export const GalleryScreen = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Only run once on mount
 
-  const renderImageItem = ({item}: {item: ImageFile}) => (
+  const renderImageItem = ({ item }: { item: ImageFile }) => (
     <TouchableOpacity
       style={styles.imageItem}
       onPress={() => handleImagePress(item)}>
       <Image
-        source={{uri: `file://${item.path}`}}
+        source={{ uri: `file://${item.path}` }}
         style={styles.imageThumbnail}
         resizeMode="cover"
       />
@@ -305,7 +277,7 @@ export const GalleryScreen = () => {
     </TouchableOpacity>
   );
 
-  const renderFolderSection = ({item}: {item: ImageFolder}) => {
+  const renderFolderSection = ({ item }: { item: ImageFolder }) => {
     const folder = item;
     const isCollapsed = collapsedFolders.has(folder.path);
 
@@ -327,7 +299,7 @@ export const GalleryScreen = () => {
           </View>
           {folder.thumbnail && (
             <Image
-              source={{uri: `file://${folder.thumbnail}`}}
+              source={{ uri: `file://${folder.thumbnail}` }}
               style={styles.folderThumbnail}
               resizeMode="cover"
             />
@@ -413,23 +385,17 @@ export const GalleryScreen = () => {
         imageIndex={0}
         visible={imageModalVisible}
         onRequestClose={() => setImageModalVisible(false)}
-        FooterComponent={() => (
-          <View style={styles.imageModalActions}>
-            <TouchableOpacity
-              style={styles.imageActionButton}
-              onPress={handleShareImage}>
-              <Icon name="share" size={24} color={theme.colors.background} />
-              <Text style={styles.imageActionText}>Share</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.imageActionButton, styles.deleteButton]}
-              onPress={handleDeleteImage}>
-              <Icon name="delete" size={24} color="#fff" />
-              <Text style={[styles.imageActionText, styles.deleteButtonText]}>
-                Delete
-              </Text>
-            </TouchableOpacity>
-          </View>
+        HeaderComponent={() => (
+          <MediaFooter
+            name={selectedImage?.name}
+            path={selectedImage?.path}
+            onDeleteSuccess={async () => {
+              setImageModalVisible(false);
+              setSelectedImage(null);
+              // Refresh the gallery
+              await scanForImages();
+            }}
+          />
         )}
       />
 
@@ -444,12 +410,12 @@ export const GalleryScreen = () => {
   );
 };
 
-const {width: screenWidth, height: screenHeight} = Dimensions.get('window');
+const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 const imageSize = (screenWidth - 60) / 3; // 3 columns with margins
 
 const createStyles = (theme: any) =>
   StyleSheet.create({
-    videoIcon: {position: 'absolute', top: 0, left: 0},
+    videoIcon: { position: 'absolute', top: 0, left: 0 },
     container: {
       flex: 1,
       backgroundColor: theme.colors.background,

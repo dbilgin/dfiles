@@ -36,6 +36,9 @@ export const getFileType = (filename: string): FileItem['type'] => {
   if (extension && apkExtensions.includes(extension)) {
     return 'apk';
   }
+  if (extension === 'meta') {
+    return 'meta';
+  }
 
   return 'other';
 };

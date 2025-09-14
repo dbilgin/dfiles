@@ -19,6 +19,10 @@ export const SettingsScreen = () => {
     dispatch({type: 'TOGGLE_DARK_MODE'});
   };
 
+  const handleShowMetaFilesToggle = () => {
+    dispatch({type: 'TOGGLE_META_FILES'});
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
@@ -39,7 +43,7 @@ export const SettingsScreen = () => {
           <View style={styles.settingItem}>
             <View style={styles.settingInfo}>
               <Text style={styles.settingLabel}>Version</Text>
-              <Text style={styles.settingValue}>1.2.0</Text>
+              <Text style={styles.settingValue}>1.3.0</Text>
             </View>
           </View>
         </View>
@@ -61,6 +65,27 @@ export const SettingsScreen = () => {
                 true: theme.colors.primary,
               }}
               thumbColor={state.isDarkMode ? '#fff' : '#f4f3f4'}
+            />
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Data</Text>
+          <View style={styles.settingItem}>
+            <View style={styles.settingInfo}>
+              <Text style={styles.settingLabel}>Show Meta Files</Text>
+              <Text style={styles.settingDescription}>
+                Shows meta files in the file lists.
+              </Text>
+            </View>
+            <Switch
+              value={state.showMetaFiles}
+              onValueChange={handleShowMetaFilesToggle}
+              trackColor={{
+                false: theme.colors.border,
+                true: theme.colors.primary,
+              }}
+              thumbColor={state.showMetaFiles ? '#fff' : '#f4f3f4'}
             />
           </View>
         </View>
