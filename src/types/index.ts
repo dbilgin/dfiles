@@ -5,7 +5,7 @@ export interface FileItem {
   isDirectory: boolean;
   mtime: Date;
   isSelected?: boolean;
-  type?: 'image' | 'video' | 'audio' | 'document' | 'apk' | 'other';
+  type?: 'image' | 'video' | 'audio' | 'document' | 'apk' | 'meta' | 'other';
 }
 
 export interface FolderInfo {
@@ -20,6 +20,7 @@ export interface AppState {
   selectedFiles: string[];
   isSelectionMode: boolean;
   isDarkMode: boolean;
+  showMetaFiles: boolean;
   clipboard: {
     files: string[];
     operation: 'copy' | 'cut' | null;

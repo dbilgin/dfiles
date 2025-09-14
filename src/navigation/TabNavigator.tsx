@@ -4,10 +4,10 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import {useAppContext} from '../context/AppContext';
 import {lightTheme, darkTheme} from '../utils/theme';
 import {FileManagerScreen} from '../screens/FileManagerScreen';
-import {GalleryScreen} from '../screens/GalleryScreen';
 import {SettingsScreen} from '../screens/SettingsScreen';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import { StyleSheet } from 'react-native';
+import { GalleryStack } from './GalleryStack';
 
 const Tab = createBottomTabNavigator();
 
@@ -46,8 +46,8 @@ export const TabNavigator = () => {
           }}
         />
         <Tab.Screen
-          name="Gallery"
-          component={GalleryScreen}
+          name="GalleryStack"
+          component={GalleryStack}
           options={{
             title: 'Gallery',
             tabBarIcon: ({color, size}) => (

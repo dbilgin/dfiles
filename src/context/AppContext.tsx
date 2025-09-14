@@ -3,6 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {FileItem, AppState} from '../types';
 import RNFS from 'react-native-fs';
 
+const SHOW_META_FILES_KEY = 'showMetaFiles';
 const DARK_MODE_KEY = 'darkMode';
 
 interface AppContextType {
@@ -18,7 +19,9 @@ export type AppAction =
   | {type: 'CLEAR_SELECTION'}
   | {type: 'SET_SELECTION_MODE'; payload: boolean}
   | {type: 'TOGGLE_DARK_MODE'}
+  | {type: 'TOGGLE_META_FILES'}
   | {type: 'SET_DARK_MODE'; payload: boolean}
+  | {type: 'SET_SHOW_META_FILES'; payload: boolean}
   | {type: 'SET_CLIPBOARD'; payload: {files: string[]; operation: 'copy' | 'cut'}}
   | {type: 'CLEAR_CLIPBOARD'}
   | {type: 'UPDATE_FILE'; payload: FileItem}
@@ -30,6 +33,7 @@ const initialState: AppState = {
   selectedFiles: [],
   isSelectionMode: false,
   isDarkMode: false,
+  showMetaFiles: false,
   clipboard: {
     files: [],
     operation: 'copy',
@@ -87,10 +91,22 @@ function appReducer(state: AppState, action: AppAction): AppState {
         ...state,
         isDarkMode: newDarkMode,
       };
+    case 'TOGGLE_META_FILES':
+      const newShowMetaFiles = !state.showMetaFiles;
+      AsyncStorage.setItem(SHOW_META_FILES_KEY, JSON.stringify(newShowMetaFiles));
+      return  {
+        ...state,
+        showMetaFiles: newShowMetaFiles,
+       };
     case 'SET_DARK_MODE':
       return {
         ...state,
         isDarkMode: action.payload,
+      };
+    case 'SET_SHOW_META_FILES':
+      return {
+        ...state,
+        showMetaFiles: action.payload,
       };
     case 'SET_CLIPBOARD':
       return {
@@ -128,16 +144,22 @@ export function AppProvider({children}: {children: ReactNode}) {
   const [state, dispatch] = useReducer(appReducer, initialState);
 
   useEffect(() => {
-    // Load dark mode setting from AsyncStorage on app startup
+    // Load settings from AsyncStorage on app startup
     const loadDarkModeSetting = async () => {
       try {
+        const savedMetaFiles = await AsyncStorage.getItem(SHOW_META_FILES_KEY);
+        if (savedMetaFiles !== null) {
+          const isShowMetaFiles = JSON.parse(savedMetaFiles);
+          dispatch({type: 'SET_SHOW_META_FILES', payload: isShowMetaFiles});
+        }
+
         const savedDarkMode = await AsyncStorage.getItem(DARK_MODE_KEY);
         if (savedDarkMode !== null) {
           const isDarkMode = JSON.parse(savedDarkMode);
           dispatch({type: 'SET_DARK_MODE', payload: isDarkMode});
         }
       } catch (error) {
-        console.error('Error loading dark mode setting:', error);
+        console.error('Error loading settings:', error);
       }
     };
 

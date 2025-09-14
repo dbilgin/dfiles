@@ -234,8 +234,12 @@ export const FileManagerScreen: React.FC<FileManagerScreenProps> = () => {
         const files = await readDirectory(path);
         console.log('Files found:', files.length);
 
-        const sortedFiles = sortFiles(files, sortOptions);
-        dispatch({type: 'SET_FILES', payload: sortedFiles});
+        const sortedFiles = sortFiles(files, sortOptions)
+        const filteredFiles = state.showMetaFiles ? sortedFiles : sortedFiles.filter(
+          (file) => file.type !== 'meta',
+        );
+
+        dispatch({type: 'SET_FILES', payload: filteredFiles});
         dispatch({type: 'SET_CURRENT_PATH', payload: path});
       } catch (error) {
         console.error('Error loading files:', error);
@@ -245,7 +249,7 @@ export const FileManagerScreen: React.FC<FileManagerScreenProps> = () => {
         setLoading(false);
       }
     },
-    [dispatch, sortOptions],
+    [dispatch, sortOptions, state.showMetaFiles],
   );
 
   const loadRecentFiles = useCallback(async () => {
