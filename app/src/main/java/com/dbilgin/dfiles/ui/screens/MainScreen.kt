@@ -11,7 +11,7 @@ import androidx.compose.ui.unit.dp
 import com.dbilgin.dfiles.ui.viewmodel.FileViewModel
 
 enum class MainTab {
-    FILES, GALLERY
+    FILES, GALLERY, SETTINGS
 }
 
 @Composable
@@ -65,6 +65,12 @@ fun MainScreen(
                         viewModel.loadGallery()
                     }
                 )
+                NavigationBarItem(
+                    icon = { Icon(Icons.Filled.Settings, contentDescription = "Settings") },
+                    label = { Text("Settings") },
+                    selected = selectedTab == MainTab.SETTINGS,
+                    onClick = { selectedTab = MainTab.SETTINGS }
+                )
             }
         }
     ) { paddingValues ->
@@ -96,6 +102,15 @@ fun MainScreen(
                             onOpenImage = { images, index -> onOpenImage(images, index, "GALLERY") },
                             onOpenVideo = { videos, index -> onOpenVideo(videos, index, "GALLERY") }
                         )
+                    }
+                }
+                MainTab.SETTINGS -> {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .statusBarsPadding()
+                    ) {
+                        SettingsScreen()
                     }
                 }
             }
