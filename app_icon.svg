@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="256" cy="256" r="240" fill="#2196F3" stroke="#1976D2" stroke-width="8"/>
+  
+  <!-- Main folder -->
+  <path d="M120 180 L392 180 Q412 180 412 200 L412 360 Q412 380 392 380 L120 380 Q100 380 100 360 L100 200 Q100 180 120 180 Z" fill="#FFFFFF" opacity="0.95"/>
+  
+  <!-- Folder tab -->
+  <path d="M120 180 L200 180 L220 160 L280 160 L300 180 L392 180 Q412 180 412 200 L412 190 Q412 170 392 170 L300 170 L280 150 L220 150 L200 170 L120 170 Q100 170 100 190 L100 200 Q100 180 120 180 Z" fill="#FFFFFF" opacity="0.9"/>
+  
+  <!-- Letter 'd' -->
+  <text x="256" y="300" font-family="Arial, sans-serif" font-size="120" font-weight="bold" text-anchor="middle" fill="#2196F3">d</text>
+  
+  <!-- Small files icon inside folder -->
+  <rect x="140" y="220" width="20" height="25" fill="#2196F3" opacity="0.6" rx="2"/>
+  <rect x="170" y="220" width="20" height="25" fill="#2196F3" opacity="0.6" rx="2"/>
+  <rect x="200" y="220" width="20" height="25" fill="#2196F3" opacity="0.6" rx="2"/>
+  
+  <!-- Subtle shadow -->
+  <ellipse cx="256" cy="480" rx="200" ry="20" fill="#000000" opacity="0.1"/>
+</svg>
