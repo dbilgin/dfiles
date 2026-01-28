@@ -5,14 +5,14 @@ plugins {
 
 android {
     namespace = "com.dbilgin.dfiles"
-    compileSdk = 34
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.dbilgin.dfiles"
         minSdk = 26
-        targetSdk = 34
-        versionCode = 1
-        versionName = "1.0"
+        targetSdk = 36
+        versionCode = (project.findProperty("VERSION_CODE") ?: "1").toString().toInt()
+        versionName = (project.findProperty("VERSION_NAME") ?: "1.0").toString()
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
