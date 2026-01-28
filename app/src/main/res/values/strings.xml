@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">dfiles</string>
+    <string name="storage_permission_title">Storage Permission Required</string>
+    <string name="storage_permission_message">dfiles needs access to manage all files on your device to function as a file manager.</string>
+    <string name="grant_permission">Grant Permission</string>
+    <string name="internal_storage">Internal Storage</string>
+    <string name="sd_card">SD Card</string>
+    <string name="downloads">Downloads</string>
+    <string name="images">Images</string>
+    <string name="videos">Videos</string>
+    <string name="audio">Audio</string>
+    <string name="documents">Documents</string>
+    <string name="new_folder">New Folder</string>
+    <string name="new_file">New File</string>
+    <string name="rename">Rename</string>
+    <string name="delete">Delete</string>
+    <string name="copy">Copy</string>
+    <string name="move">Move</string>
+    <string name="paste">Paste</string>
+    <string name="share">Share</string>
+    <string name="select_all">Select All</string>
+    <string name="deselect_all">Deselect All</string>
+    <string name="cancel">Cancel</string>
+    <string name="confirm">Confirm</string>
+    <string name="search">Search</string>
+    <string name="sort_by">Sort by</string>
+    <string name="name">Name</string>
+    <string name="date">Date</string>
+    <string name="size">Size</string>
+    <string name="type">Type</string>
+    <string name="ascending">Ascending</string>
+    <string name="descending">Descending</string>
+    <string name="empty_folder">This folder is empty</string>
+    <string name="delete_confirmation">Are you sure you want to delete %1$d item(s)?</string>
+    <string name="folder_name">Folder name</string>
+    <string name="file_name">File name</string>
+    <string name="details">Details</string>
+    <string name="path">Path</string>
+    <string name="modified">Modified</string>
+    <string name="created">Created</string>
+    <string name="gallery">Gallery</string>
+    <string name="files">Files</string>
+    <string name="home">Home</string>
+</resources>
