@@ -15,6 +15,8 @@ A simple, offline file manager and gallery app for Android built with Kotlin and
 - **Deep Links**: Open files and folders from other apps
 - **Offline Only**: No internet permissions - completely offline functionality
 
+<img width="300" alt="Screenshot_20260128_172244" src="https://github.com/user-attachments/assets/476d7473-f91f-4921-bf52-552ef61ba745" />
+
 ## Tech Stack
 
 - **Kotlin** - Primary language
