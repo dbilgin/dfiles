@@ -7,6 +7,7 @@ import com.dbilgin.dfiles.data.model.FileItem
 import com.dbilgin.dfiles.data.model.SortOrder
 import com.dbilgin.dfiles.data.model.SortType
 import com.dbilgin.dfiles.data.repository.FileRepository
+import com.dbilgin.dfiles.util.FileListPreferences
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -72,9 +73,15 @@ data class GalleryState(
 class FileViewModel(application: Application) : AndroidViewModel(application) {
     
     private val repository = FileRepository(application.applicationContext)
+    private val preferences = FileListPreferences(application.applicationContext)
     
-    // File list state
-    private val _fileListState = MutableStateFlow(FileListState())
+    // File list state - load initial values from preferences
+    private val _fileListState = MutableStateFlow(FileListState().copy(
+        sortType = parseSortType(preferences.getSortType()),
+        sortOrder = parseSortOrder(preferences.getSortOrder()),
+        showHidden = preferences.getShowHidden(),
+        viewMode = parseViewMode(preferences.getViewMode())
+    ))
     val fileListState: StateFlow<FileListState> = _fileListState.asStateFlow()
     
     // Selection state
@@ -108,6 +115,15 @@ class FileViewModel(application: Application) : AndroidViewModel(application) {
     init {
         loadStorageInfo()
     }
+
+    private fun parseSortType(value: String): SortType =
+        SortType.entries.find { it.name == value } ?: SortType.NAME
+
+    private fun parseSortOrder(value: String): SortOrder =
+        SortOrder.entries.find { it.name == value } ?: SortOrder.ASCENDING
+
+    private fun parseViewMode(value: String): ViewMode =
+        ViewMode.entries.find { it.name == value } ?: ViewMode.LIST
 
     fun loadStorageInfo() {
         viewModelScope.launch {
@@ -156,11 +172,13 @@ class FileViewModel(application: Application) : AndroidViewModel(application) {
 
     fun setSortType(sortType: SortType) {
         _fileListState.value = _fileListState.value.copy(sortType = sortType)
+        preferences.setSortType(sortType.name)
         refreshCurrentDirectory()
     }
 
     fun setSortOrder(sortOrder: SortOrder) {
         _fileListState.value = _fileListState.value.copy(sortOrder = sortOrder)
+        preferences.setSortOrder(sortOrder.name)
         refreshCurrentDirectory()
     }
 
@@ -175,11 +193,13 @@ class FileViewModel(application: Application) : AndroidViewModel(application) {
 
     fun setShowHidden(show: Boolean) {
         _fileListState.value = _fileListState.value.copy(showHidden = show)
+        preferences.setShowHidden(show)
         refreshCurrentDirectory()
     }
 
     fun setViewMode(mode: ViewMode) {
         _fileListState.value = _fileListState.value.copy(viewMode = mode)
+        preferences.setViewMode(mode.name)
     }
 
     // Selection operations

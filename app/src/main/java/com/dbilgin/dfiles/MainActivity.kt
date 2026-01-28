@@ -183,13 +183,11 @@ fun DfilesNavigation(
                     }
                 },
                 onDelete = { deletedPath ->
-                    viewModel.deleteFile(viewModel.getFileDetails(deletedPath)!!)
-                    if (images.size <= 1) {
-                        navController.popBackStack()
-                        navController.navigate("main/$fromTab") {
-                            launchSingleTop = true
-                            restoreState = true
-                        }
+                    viewModel.getFileDetails(deletedPath)?.let { viewModel.deleteFile(it) }
+                    navController.popBackStack()
+                    navController.navigate("main/$fromTab") {
+                        launchSingleTop = true
+                        restoreState = true
                     }
                 }
             )
@@ -223,13 +221,11 @@ fun DfilesNavigation(
                     }
                 },
                 onDelete = { deletedPath ->
-                    viewModel.deleteFile(viewModel.getFileDetails(deletedPath)!!)
-                    if (videos.size <= 1) {
-                        navController.popBackStack()
-                        navController.navigate("main/$fromTab") {
-                            launchSingleTop = true
-                            restoreState = true
-                        }
+                    viewModel.getFileDetails(deletedPath)?.let { viewModel.deleteFile(it) }
+                    navController.popBackStack()
+                    navController.navigate("main/$fromTab") {
+                        launchSingleTop = true
+                        restoreState = true
                     }
                 }
             )
