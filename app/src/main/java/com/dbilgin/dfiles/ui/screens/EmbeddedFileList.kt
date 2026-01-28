@@ -121,7 +121,8 @@ fun EmbeddedFileList(
         }
 
         // File list content
-        Box(modifier = Modifier.weight(1f)) {
+        // Fill width so center alignment is truly centered (weight alone can wrap width).
+        Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
             when {
                 fileListState.isLoading -> {
                     CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
