@@ -26,13 +26,26 @@ import com.dbilgin.dfiles.ui.viewmodel.ViewMode
 import com.dbilgin.dfiles.util.FileUtils
 import java.io.File
 
+private fun fileMatchesPickerType(fileItem: FileItem, pickerType: String?): Boolean {
+    if (pickerType == null) return true
+    return when (pickerType) {
+        "image/*" -> fileItem.isImage
+        "video/*" -> fileItem.isVideo
+        else -> true // */* or any other type
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EmbeddedFileList(
     viewModel: FileViewModel,
     onNavigateToFolder: (String) -> Unit,
     onOpenImage: (images: List<String>, index: Int) -> Unit,
-    onOpenVideo: (videos: List<String>, index: Int) -> Unit
+    onOpenVideo: (videos: List<String>, index: Int) -> Unit,
+    pickerMode: Boolean = false,
+    pickerType: String? = null,
+    onPickFile: ((path: String, mimeType: String) -> Unit)? = null,
+    onPickerCancel: (() -> Unit)? = null
 ) {
     val context = LocalContext.current
     val fileListState by viewModel.fileListState.collectAsState()
@@ -52,7 +65,9 @@ fun EmbeddedFileList(
     var fileToDelete by remember { mutableStateOf<FileItem?>(null) }
 
     // Handle system back button
-    BackHandler(enabled = selectionState.isSelectionMode || searchState.isSearching || !viewModel.isRootPath()) {
+    val backHandlerEnabled = selectionState.isSelectionMode || searchState.isSearching ||
+        !viewModel.isRootPath() || (pickerMode && viewModel.isRootPath())
+    BackHandler(enabled = backHandlerEnabled) {
         when {
             selectionState.isSelectionMode -> viewModel.clearSelection()
             searchState.isSearching -> viewModel.stopSearch()
@@ -62,6 +77,7 @@ fun EmbeddedFileList(
                     viewModel.loadFiles(parentPath)
                 }
             }
+            pickerMode && viewModel.isRootPath() -> onPickerCancel?.invoke()
         }
     }
 
@@ -163,7 +179,7 @@ fun EmbeddedFileList(
                                     isSelected = selectionState.selectedFiles.contains(fileItem.path),
                                     isSelectionMode = selectionState.isSelectionMode,
                                     onClick = {
-                                        handleFileClick(fileItem, selectionState.isSelectionMode, viewModel, context, onOpenImage, onOpenVideo)
+                                        handleFileClick(fileItem, selectionState.isSelectionMode, viewModel, context, onOpenImage, onOpenVideo, pickerType, onPickFile)
                                     },
                                     onLongClick = {
                                         // Long press shows action sheet (which includes info/details)
@@ -187,7 +203,7 @@ fun EmbeddedFileList(
                                     isSelected = selectionState.selectedFiles.contains(fileItem.path),
                                     isSelectionMode = selectionState.isSelectionMode,
                                     onClick = {
-                                        handleFileClick(fileItem, selectionState.isSelectionMode, viewModel, context, onOpenImage, onOpenVideo)
+                                        handleFileClick(fileItem, selectionState.isSelectionMode, viewModel, context, onOpenImage, onOpenVideo, pickerType, onPickFile)
                                     },
                                     onLongClick = {
                                         // Long press shows action sheet (which includes info/details)
@@ -298,7 +314,7 @@ fun EmbeddedFileList(
         FileActionsSheet(
             fileItem = fileItem,
             onDismiss = { showActionsSheet = null },
-            onOpen = { handleFileOpen(fileItem, viewModel, context, onOpenImage, onOpenVideo) },
+            onOpen = { handleFileOpen(fileItem, viewModel, context, onOpenImage, onOpenVideo, pickerType, onPickFile) },
             onRename = { showRenameDialog = fileItem },
             onCopy = { viewModel.copyToClipboard(listOf(fileItem)) },
             onCut = { viewModel.cutToClipboard(listOf(fileItem)) },
@@ -319,8 +335,14 @@ private fun handleFileClick(
     viewModel: FileViewModel,
     context: android.content.Context,
     onOpenImage: (images: List<String>, index: Int) -> Unit,
-    onOpenVideo: (videos: List<String>, index: Int) -> Unit
+    onOpenVideo: (videos: List<String>, index: Int) -> Unit,
+    pickerType: String? = null,
+    onPickFile: ((path: String, mimeType: String) -> Unit)? = null
 ) {
+    if (onPickFile != null && !fileItem.isDirectory && fileMatchesPickerType(fileItem, pickerType)) {
+        onPickFile(fileItem.path, fileItem.mimeType)
+        return
+    }
     if (isSelectionMode) {
         viewModel.toggleFileSelection(fileItem.path)
     } else {
@@ -366,8 +388,14 @@ private fun handleFileOpen(
     viewModel: FileViewModel,
     context: android.content.Context,
     onOpenImage: (images: List<String>, index: Int) -> Unit,
-    onOpenVideo: (videos: List<String>, index: Int) -> Unit
+    onOpenVideo: (videos: List<String>, index: Int) -> Unit,
+    pickerType: String? = null,
+    onPickFile: ((path: String, mimeType: String) -> Unit)? = null
 ) {
+    if (onPickFile != null && !fileItem.isDirectory && fileMatchesPickerType(fileItem, pickerType)) {
+        onPickFile(fileItem.path, fileItem.mimeType)
+        return
+    }
     when {
         fileItem.isDirectory -> {
             viewModel.loadFiles(fileItem.path)

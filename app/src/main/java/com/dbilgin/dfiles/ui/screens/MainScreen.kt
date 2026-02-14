@@ -21,7 +21,11 @@ fun MainScreen(
     initialPath: String? = null,
     onNavigateToFolder: (String) -> Unit,
     onOpenImage: (images: List<String>, index: Int, fromTab: String) -> Unit,
-    onOpenVideo: (videos: List<String>, index: Int, fromTab: String) -> Unit
+    onOpenVideo: (videos: List<String>, index: Int, fromTab: String) -> Unit,
+    pickerMode: Boolean = false,
+    pickerType: String? = null,
+    onPickFile: ((path: String, mimeType: String) -> Unit)? = null,
+    onPickerCancel: (() -> Unit)? = null
 ) {
     // Use initialTab as key to ensure tab resets when route changes
     var selectedTab by remember(initialTab) { mutableStateOf(initialTab) }
@@ -87,7 +91,11 @@ fun MainScreen(
                         storageVolumes = storageVolumes,
                         onNavigateToFolder = onNavigateToFolder,
                         onOpenImage = { images, index -> onOpenImage(images, index, "FILES") },
-                        onOpenVideo = { videos, index -> onOpenVideo(videos, index, "FILES") }
+                        onOpenVideo = { videos, index -> onOpenVideo(videos, index, "FILES") },
+                        pickerMode = pickerMode,
+                        pickerType = pickerType,
+                        onPickFile = onPickFile,
+                        onPickerCancel = onPickerCancel
                     )
                 }
                 MainTab.GALLERY -> {
@@ -125,7 +133,11 @@ private fun FilesTabContent(
     storageVolumes: List<com.dbilgin.dfiles.data.repository.FileRepository.StorageInfo>,
     onNavigateToFolder: (String) -> Unit,
     onOpenImage: (images: List<String>, index: Int) -> Unit,
-    onOpenVideo: (videos: List<String>, index: Int) -> Unit
+    onOpenVideo: (videos: List<String>, index: Int) -> Unit,
+    pickerMode: Boolean = false,
+    pickerType: String? = null,
+    onPickFile: ((path: String, mimeType: String) -> Unit)? = null,
+    onPickerCancel: (() -> Unit)? = null
 ) {
     val fileListState by viewModel.fileListState.collectAsState()
     val selectionState by viewModel.selectionState.collectAsState()
@@ -161,7 +173,11 @@ private fun FilesTabContent(
             viewModel = viewModel,
             onNavigateToFolder = onNavigateToFolder,
             onOpenImage = onOpenImage,
-            onOpenVideo = onOpenVideo
+            onOpenVideo = onOpenVideo,
+            pickerMode = pickerMode,
+            pickerType = pickerType,
+            onPickFile = onPickFile,
+            onPickerCancel = onPickerCancel
         )
     }
 
