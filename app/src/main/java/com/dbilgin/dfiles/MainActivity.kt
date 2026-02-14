@@ -1,5 +1,6 @@
 package com.dbilgin.dfiles
 
+import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -14,6 +15,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.FileProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -45,9 +47,44 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
+                    val isPickerMode = intent?.action == Intent.ACTION_GET_CONTENT ||
+                        intent?.action == Intent.ACTION_PICK
+                    val pickerType = when {
+                        !isPickerMode -> null
+                        intent?.type?.startsWith("image/") == true -> "image/*"
+                        intent?.type?.startsWith("video/") == true -> "video/*"
+                        else -> intent?.type ?: "*/*"
+                    }
+                    val onPickFile: ((path: String, mimeType: String) -> Unit)? =
+                        if (isPickerMode) { path, _ ->
+                            val file = File(path)
+                            if (file.exists()) {
+                                val uri = FileProvider.getUriForFile(
+                                    this@MainActivity,
+                                    "com.dbilgin.dfiles.provider",
+                                    file
+                                )
+                                setResult(Activity.RESULT_OK, Intent().apply {
+                                    data = uri
+                                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                })
+                                finish()
+                            }
+                        } else null
+                    val onPickerCancel: (() -> Unit)? =
+                        if (isPickerMode) {
+                            {
+                                setResult(Activity.RESULT_CANCELED)
+                                finish()
+                            }
+                        } else null
                     DfilesNavigation(
                         onRequestPermission = { requestStoragePermission() },
-                        intent = intent
+                        intent = intent,
+                        pickerMode = isPickerMode,
+                        pickerType = pickerType,
+                        onPickFile = onPickFile,
+                        onPickerCancel = onPickerCancel
                     )
                 }
             }
@@ -72,7 +109,11 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun DfilesNavigation(
     onRequestPermission: () -> Unit,
-    intent: Intent?
+    intent: Intent?,
+    pickerMode: Boolean = false,
+    pickerType: String? = null,
+    onPickFile: ((path: String, mimeType: String) -> Unit)? = null,
+    onPickerCancel: (() -> Unit)? = null
 ) {
     val navController = rememberNavController()
     val viewModel: FileViewModel = viewModel()
@@ -148,7 +189,11 @@ fun DfilesNavigation(
                         // Save state so we can restore tab and folder when navigating back
                         launchSingleTop = false
                     }
-                }
+                },
+                pickerMode = pickerMode,
+                pickerType = pickerType,
+                onPickFile = onPickFile,
+                onPickerCancel = onPickerCancel
             )
         }
 
